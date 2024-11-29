@@ -1,0 +1,108 @@
+.lexia-command-modal {
+    max-width: 600px !important;
+    margin: auto;
+}
+
+.lexia-command-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.lexia-command-search {
+    width: 100%;
+}
+
+.lexia-command-search input {
+    width: 100%;
+    font-size: 1.2em;
+    padding: 0.8em;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background: #f8f9fa;
+}
+
+.lexia-command-results {
+    max-height: 400px;
+    overflow-y: auto;
+    padding: 0.5rem;
+}
+
+.lexia-command-results ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.lexia-command-result {
+    display: flex;
+    align-items: center;
+    padding: 0.8em;
+    margin: 0.3em 0;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.lexia-command-result.selected {
+    background-color: #0073aa;
+    color: white;
+}
+
+.lexia-command-result:not(.selected):hover {
+    background-color: #f0f0f0;
+}
+
+.lexia-command-result-icon {
+    margin-right: 12px;
+    font-size: 1.2em;
+    min-width: 24px;
+    text-align: center;
+}
+
+.lexia-command-result-title {
+    flex-grow: 1;
+    font-size: 1em;
+}
+
+.lexia-command-loading,
+.lexia-command-no-results,
+.lexia-command-empty-state {
+    text-align: center;
+    padding: 2em;
+    color: #666;
+}
+
+/* Modal overlay customization */
+.components-modal__screen-overlay {
+    background-color: rgba(0, 0, 0, 0.7);
+    animation: fadeIn 0.2s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* Keyboard shortcut hints */
+.lexia-command-shortcut {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: auto;
+    padding-left: 12px;
+    color: #666;
+    font-size: 0.9em;
+}
+
+.lexia-command-shortcut kbd {
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: #f0f0f0;
+    border: 1px solid #ddd;
+    font-family: monospace;
+} 
