@@ -6,7 +6,7 @@
  * Loads and defines the internationalization files for this plugin
  * so that it is ready for translation.
  *
- * @link       https://specflux.com
+ * @link       https://specflux.com/lexia-command
  * @since      1.0.0
  *
  * @package    Lexia_Command
@@ -22,7 +22,7 @@
  * @since      1.0.0
  * @package    Lexia_Command
  * @subpackage Lexia_Command/includes
- * @author     Stephen Paul <stephenpaul@specflux.com>
+ * @author     Stephen Paul <stephen1204paul@gmail.com>
  */
 class Lexia_Command_i18n {
 

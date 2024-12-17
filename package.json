@@ -8,7 +8,7 @@
     "check-engines": "wp-scripts check-engines"
   },
   "keywords": [],
-  "author": "Specflux Solutions",
+  "author": "Stephen Paul",
   "license": "GPL-2.0-or-later",
   "dependencies": {
     "@wordpress/api-fetch": "^6.0.0",

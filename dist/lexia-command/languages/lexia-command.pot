@@ -31,7 +31,7 @@ msgid "Stephen Paul"
 msgstr ""
 
 #. Author URI of the plugin
-msgid "https://www.specflux.com/author/stephen/"
+msgid "https://profiles.wordpress.org/stephen1204paul/"
 msgstr ""
 
 #: src/js/components/CommandBar.js:123

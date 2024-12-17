@@ -8,7 +8,7 @@
  * registers the activation and deactivation functions, and defines a function
  * that starts the plugin.
  *
- * @link              https://specflux.com
+ * @link              https://specflux.com/lexia-command
  * @since             1.0.0
  * @package           Lexia_Command
  *
@@ -18,7 +18,7 @@
  * Description:       Plugin to supercharge your WordPress workflow using command bar shortcuts.
  * Version:           1.0.0
  * Author:            Stephen Paul
- * Author URI:        https://www.specflux.com/author/stephen/
+ * Author URI:        https://profiles.wordpress.org/stephen1204paul/
  * License:           GPL-2.0+
  * License URI:       http://www.gnu.org/licenses/gpl-2.0.txt
  * Text Domain:       lexia-command
