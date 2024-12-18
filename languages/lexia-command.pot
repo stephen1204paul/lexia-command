@@ -19,7 +19,7 @@ msgid "Lexia Command"
 msgstr ""
 
 #. Plugin URI of the plugin
-msgid "https://specflux.com/lexia-command"
+msgid "https://github.com/stephen1204paul/lexia-command"
 msgstr ""
 
 #. Description of the plugin

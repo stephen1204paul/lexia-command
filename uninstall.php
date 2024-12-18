@@ -19,7 +19,7 @@
  * For more information, see the following discussion:
  * https://github.com/tommcfarlin/WordPress-Plugin-Boilerplate/pull/123#issuecomment-28541913
  *
- * @link       https://specflux.com/lexia-command
+ * @link       https://github.com/stephen1204paul/lexia-command
  * @since      1.0.0
  *
  * @package    Lexia_Command

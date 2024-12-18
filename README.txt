@@ -32,9 +32,13 @@ Lexia Command adds a powerful command bar to your WordPress site. Access everyth
 * Navigate WordPress settings
 * And much more!
 
-= GitHub Repository =
+= Development =
 
-For bug reports, feature requests, or to contribute, visit our [GitHub repository](https://github.com/stephen1204paul/lexia-command).
+This plugin is developed and maintained on GitHub. Feel free to contribute!
+
+* [GitHub Repository](https://github.com/stephen1204paul/lexia-command)
+* [Report Issues](https://github.com/stephen1204paul/lexia-command/issues)
+* [Feature Requests](https://github.com/stephen1204paul/lexia-command/issues)
 
 == Installation ==
 
@@ -50,7 +54,7 @@ Press CMD+K on Mac or CTRL+K on Windows/Linux.
 
 = Can I add my own commands? =
 
-Yes! Lexia Command provides filters that allow developers to add custom commands. Documentation available in our GitHub repository.
+Yes! Lexia Command provides filters that allow developers to add custom commands. Documentation available in the GitHub repository.
 
 = Does it work with custom post types? =
 

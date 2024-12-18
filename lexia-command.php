@@ -3,19 +3,14 @@
 /**
  * The plugin bootstrap file
  *
- * This file is read by WordPress to generate the plugin information in the plugin
- * admin area. This file also includes all of the dependencies used by the plugin,
- * registers the activation and deactivation functions, and defines a function
- * that starts the plugin.
- *
- * @link              https://specflux.com/lexia-command
+ * @link              https://profiles.wordpress.org/stephen1204paul/
  * @since             1.0.0
  * @package           Lexia_Command
  *
  * @wordpress-plugin
  * Plugin Name:       Lexia Command
- * Plugin URI:        https://specflux.com/lexia-command
- * Description:       Plugin to supercharge your WordPress workflow using command bar shortcuts.
+ * Plugin URI:        https://github.com/stephen1204paul/lexia-command
+ * Description:       A powerful, keyboard-driven command bar for WordPress, inspired by macOS Spotlight.
  * Version:           1.0.0
  * Author:            Stephen Paul
  * Author URI:        https://profiles.wordpress.org/stephen1204paul/
