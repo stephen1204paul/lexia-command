@@ -11,7 +11,7 @@
  * Plugin Name:       Lexia Command
  * Plugin URI:        https://github.com/stephen1204paul/lexia-command
  * Description:       A powerful, keyboard-driven command bar for WordPress, inspired by macOS Spotlight.
- * Version:           1.0.0
+ * Version:           1.0.1
  * Author:            Stephen Paul
  * Author URI:        https://profiles.wordpress.org/stephen1204paul/
  * License:           GPL-2.0+
@@ -29,7 +29,7 @@ if (!defined('WPINC')) {
  * Currently plugin version.
  * Start at version 1.0.0 and use SemVer - https://semver.org
  */
-define('LEXIA_COMMAND_VERSION', '1.0.0');
+define('LEXIA_COMMAND_VERSION', '1.0.1');
 
 /**
  * The code that runs during plugin activation.
@@ -66,3 +66,44 @@ function run_lexia_command() {
 }
 
 run_lexia_command();
+
+function plugin_feedback_admin_notice() {
+    // Get the current user ID
+    $user_id = get_current_user_id();
+
+    // Check if the notice has already been dismissed
+    if (get_user_meta($user_id, 'plugin_feedback_notice_dismissed', true)) {
+        return;
+    }
+
+    // Output the notice
+    ?>
+    <div class="notice notice-info is-dismissible" id="plugin-feedback-notice">
+        <p>Enjoying <strong>Lexia Command</strong>? Please share your feedback or request integration through <a href="https://docs.google.com/forms/d/e/1FAIpQLSeZzO0u0MC6VqA14kN-0L7RR6IW-yRqEPG9RezbddKDloaHOQ/viewform?usp=dialog" target="_blank">this form </a>!</p>
+    </div>
+
+    <script type="text/javascript">
+        (function($){
+            $(document).on('click', '#plugin-feedback-notice .notice-dismiss', function() {
+                $.post(ajaxurl, {
+                    action: 'dismiss_plugin_feedback_notice',
+                    security: '<?php echo wp_create_nonce("dismiss_feedback_nonce"); ?>'
+                });
+            });
+        })(jQuery);
+    </script>
+    <?php
+}
+add_action('admin_notices', 'plugin_feedback_admin_notice');
+
+// Handle AJAX request to mark the notice as dismissed
+function plugin_dismiss_feedback_notice() {
+    check_ajax_referer('dismiss_feedback_nonce', 'security');
+    
+    $user_id = get_current_user_id();
+    update_user_meta($user_id, 'plugin_feedback_notice_dismissed', true);
+
+    wp_send_json_success();
+}
+add_action('wp_ajax_dismiss_plugin_feedback_notice', 'plugin_dismiss_feedback_notice');
+
