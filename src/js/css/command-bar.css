@@ -1,12 +1,18 @@
 .lexia-command-modal {
-    max-width: 600px !important;
+    max-width: 980px !important;
+    width: 100%;
     margin: auto;
+    background: rgba(32, 33, 35, 0.95) !important;
+    border-radius: 12px !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
 }
 
 .lexia-command-container {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 0.5rem;
+    padding: 8px;
 }
 
 .lexia-command-search {
@@ -15,17 +21,38 @@
 
 .lexia-command-search input {
     width: 100%;
-    font-size: 1.2em;
-    padding: 0.8em;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    background: #f8f9fa;
+    font-size: 1rem;
+    padding: 12px 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff;
+    transition: all 0.2s ease;
+}
+
+.lexia-command-search input:focus {
+    outline: none;
+    border-color: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.08);
 }
 
 .lexia-command-results {
     max-height: 400px;
     overflow-y: auto;
-    padding: 0.5rem;
+    padding: 4px;
+}
+
+.lexia-command-results::-webkit-scrollbar {
+    width: 6px;
+}
+
+.lexia-command-results::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.lexia-command-results::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
 }
 
 .lexia-command-results ul {
@@ -37,32 +64,33 @@
 .lexia-command-result {
     display: flex;
     align-items: center;
-    padding: 0.8em;
-    margin: 0.3em 0;
+    padding: 8px 12px;
+    margin: 2px 0;
     border-radius: 6px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    color: #fff;
+    transition: all 0.15s ease;
 }
 
 .lexia-command-result.selected {
-    background-color: #0073aa;
-    color: white;
+    background-color: rgba(255, 255, 255, 0.1);
 }
 
 .lexia-command-result:not(.selected):hover {
-    background-color: #f0f0f0;
+    background-color: rgba(255, 255, 255, 0.05);
 }
 
 .lexia-command-result-icon {
     margin-right: 12px;
-    font-size: 1.2em;
+    font-size: 1.1em;
     min-width: 24px;
     text-align: center;
+    opacity: 0.8;
 }
 
 .lexia-command-result-title {
     flex-grow: 1;
-    font-size: 1em;
+    font-size: 0.95em;
 }
 
 .lexia-command-loading,
@@ -70,39 +98,50 @@
 .lexia-command-empty-state {
     text-align: center;
     padding: 2em;
-    color: #666;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.9em;
 }
 
-/* Modal overlay customization */
 .components-modal__screen-overlay {
     background-color: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
     animation: fadeIn 0.2s ease-in-out;
 }
 
 @keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
-    to {
-        opacity: 1;
-    }
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
-/* Keyboard shortcut hints */
 .lexia-command-shortcut {
     display: flex;
     align-items: center;
     gap: 4px;
     margin-left: auto;
     padding-left: 12px;
-    color: #666;
-    font-size: 0.9em;
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 0.85em;
 }
 
 .lexia-command-shortcut kbd {
     padding: 2px 6px;
     border-radius: 4px;
-    background: #f0f0f0;
-    border: 1px solid #ddd;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     font-family: monospace;
-} 
+    font-size: 0.9em;
+}
+
+.components-modal__header {
+    background: transparent !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.components-modal__header .components-modal__header-heading {
+    color: #fff !important;
+    font-size: 1rem !important;
+}
+
+.components-modal__header .components-button {
+    color: rgba(255, 255, 255, 0.6) !important;
+}
