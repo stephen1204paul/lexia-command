@@ -20,9 +20,11 @@ export const pluginCommands = [
         title: __('Install Plugin', 'lexia-command'),
         keywords: ['install', 'plugin'],
         icon: '🔌',
-        action: () => {
+        action: (closeCommandBar) => {
             const event = new CustomEvent('lexiaCommand:showPluginSearch');
             window.dispatchEvent(event);
+            // Prevent closing the command bar for plugin installation
+            return false;
         },
     },
 ];

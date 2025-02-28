@@ -13,33 +13,47 @@
     flex-direction: column;
     gap: 0.5rem;
     padding: 8px;
+    /* Removed position relative as it's not needed and can cause stacking issues */
+    max-height: 80vh; /* Limit the overall height */
+    overflow: hidden; /* Prevent container from scrolling */
 }
 
 .lexia-command-search {
     width: 100%;
+    background: rgba(32, 33, 35, 0.95);
+    padding: 8px 0;
+    margin-bottom: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    position: sticky;
+    top: 0;
+    z-index: 10;
 }
 
-.lexia-command-search input {
+.lexia-command-search {
     width: 100%;
-    font-size: 1rem;
-    padding: 12px 16px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
-    background: rgba(255, 255, 255, 0.05);
-    color: #fff;
-    transition: all 0.2s ease;
+    padding: 12px 16px !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 8px !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+    color: #fff !important;
+    transition: all 0.2s ease !important;
+    caret-color: #fff !important;
+    text-shadow: 0 0 1px rgba(255, 255, 255, 0.5) !important;
+    font-weight: 500 !important;
 }
 
-.lexia-command-search input:focus {
-    outline: none;
-    border-color: rgba(255, 255, 255, 0.2);
-    background: rgba(255, 255, 255, 0.08);
+.lexia-command-search:focus {
+    outline: none !important;
+    border-color: rgba(255, 255, 255, 0.2) !important;
+    background: rgba(255, 255, 255, 0.08) !important;
 }
 
 .lexia-command-results {
-    max-height: 400px;
+    flex: 1;
     overflow-y: auto;
     padding: 4px;
+    scroll-behavior: auto;
+    /* This is the only scrollable container */
 }
 
 .lexia-command-results::-webkit-scrollbar {
@@ -144,4 +158,122 @@
 
 .components-modal__header .components-button {
     color: rgba(255, 255, 255, 0.6) !important;
+}
+
+.install-plugin-icon{
+    max-width: 90px;
+}
+
+.px-4{
+    padding-left: 1rem!important;
+    padding-right: 1rem!important;
+}
+
+.w-10{
+    width: 10%!important;
+}
+
+.w-20{
+    width: 20%!important;
+}
+
+.w-65{
+    width: 65%!important;
+}
+
+.w-5{
+    width: 5%!important;
+}
+
+.w-100{
+    width: 100%!important;
+}
+
+.lexia-command-modal .components-modal__content{
+    overflow-y: hidden !important;
+}
+
+.lexia-command-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100000;
+}
+
+/* CMDK specific styles */
+[cmdk-root] {
+    max-width: 980px;
+    width: 100%;
+    background: rgba(32, 33, 35, 0.95);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+[cmdk-input] {
+    width: 100%;
+    font-size: 1rem;
+    padding: 12px 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff;
+    transition: all 0.2s ease;
+    caret-color: #fff;
+}
+
+[cmdk-input]:focus {
+    outline: none;
+    border-color: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+[cmdk-list] {
+    max-height: 70vh; /* Increased from 60vh to 70vh to show more items */
+    overflow-y: auto;
+    padding: 4px;
+    margin: 0;
+    scroll-behavior: auto;
+    scrollbar-width: thin; /* For Firefox */
+}
+
+[cmdk-list]::-webkit-scrollbar {
+    width: 6px;
+}
+
+[cmdk-list]::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+[cmdk-list]::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+}
+
+/* Ensure plugin items display properly */
+[cmdk-item] {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    margin: 2px 0;
+    border-radius: 6px;
+    cursor: pointer;
+    color: #fff;
+    transition: all 0.15s ease;
+    width: 100%; /* Ensure full width */
+    box-sizing: border-box; /* Include padding in width calculation */
+}
+
+[cmdk-item][data-selected="true"] {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+[cmdk-item]:not([data-selected="true"]):hover {
+    background-color: rgba(255, 255, 255, 0.05);
 }
