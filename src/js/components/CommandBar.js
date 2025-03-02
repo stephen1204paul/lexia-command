@@ -3,7 +3,10 @@ import { __ } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 import { Command } from 'cmdk';
 import { useKeyboardShortcut } from '../hooks/useKeyboardShortcut';
+import { usePluginManager } from '../hooks/usePluginManager';
 import { searchCommands } from '../commands';
+import PluginSearchResults from './PluginSearchResults';
+import SearchResults from './SearchResults';
 import '../css/command-bar.css';
 
 function CommandBar() {
@@ -14,24 +17,19 @@ function CommandBar() {
     const [selectedIndex, setSelectedIndex] = useState(0);
     const [isPluginSearch, setIsPluginSearch] = useState(false);
     const [pluginResults, setPluginResults] = useState([]);
-    const [installingPlugin, setInstallingPlugin] = useState(null);
-    const [activatingPlugin, setActivatingPlugin] = useState(null);
-    const [pluginStatuses, setPluginStatuses] = useState({});
+    
+    // Use the plugin manager hook
+    const { 
+        installingPlugin, 
+        activatingPlugin, 
+        pluginStatuses, 
+        fetchPluginStatuses, 
+        installPlugin, 
+        activatePlugin 
+    } = usePluginManager();
 
     // Fetch plugin statuses when plugin search is initiated
     useEffect(() => {
-        const fetchPluginStatuses = async () => {
-            try {
-                const response = await apiFetch({
-                    path: `/${window.lexiaCommandData.restNamespace}/get-plugin-statuses`,
-                    method: 'GET'
-                });
-                setPluginStatuses(response.data || {});
-            } catch (error) {
-                console.error('Failed to fetch plugin statuses:', error);
-            }
-        };
-
         const handlePluginSearch = () => {
             setIsPluginSearch(true);
             setSearchTerm('');
@@ -41,62 +39,7 @@ function CommandBar() {
 
         window.addEventListener('lexiaCommand:showPluginSearch', handlePluginSearch);
         return () => window.removeEventListener('lexiaCommand:showPluginSearch', handlePluginSearch);
-    }, []);
-
-    // Remove the I and A keyboard shortcuts as they're causing problems
-    // The Enter key will now be used for both installation and activation
-
-    const installPlugin = async (slug) => {
-        setInstallingPlugin(slug);
-        try {
-            await apiFetch({
-                path: `${window.lexiaCommandData.restNamespace}/install-plugin`,
-                method: 'POST',
-                data: { slug }
-            });
-            // Update the plugin status in the results
-            setPluginResults(prevResults =>
-                prevResults.map(plugin =>
-                    plugin.slug === slug ? { ...plugin, installed: true } : plugin
-                )
-            );
-            // Update plugin statuses
-            setPluginStatuses(prev => ({
-                ...prev,
-                [slug]: { ...prev[slug], installed: true }
-            }));
-        } catch (error) {
-            console.error('Plugin installation failed:', error);
-        } finally {
-            setInstallingPlugin(null);
-        }
-    };
-
-    const activatePlugin = async (slug) => {
-        setActivatingPlugin(slug);
-        try {
-            await apiFetch({
-                path: `${window.lexiaCommandData.restNamespace}/activate-plugin`,
-                method: 'POST',
-                data: { slug }
-            });
-            // Update the plugin status in the results
-            setPluginResults(prevResults =>
-                prevResults.map(plugin =>
-                    plugin.slug === slug ? { ...plugin, installed: true, active: true } : plugin
-                )
-            );
-            // Update plugin statuses
-            setPluginStatuses(prev => ({
-                ...prev,
-                [slug]: { ...prev[slug], installed: true, active: true }
-            }));
-        } catch (error) {
-            console.error('Plugin activation failed:', error);
-        } finally {
-            setActivatingPlugin(null);
-        }
-    };
+    }, [fetchPluginStatuses]);
 
     // Search handler
     useEffect(() => {
@@ -242,97 +185,23 @@ function CommandBar() {
                                 {__('Searching...', 'lexia-command')}
                             </Command.Empty>
                         ) : isPluginSearch ? (
-                            pluginResults.length > 0 ? (
-                                <Command.Group>
-                                    {pluginResults.slice(0, 10).map((plugin, index) => (
-                                        <Command.Item
-                                            key={plugin.slug}
-                                            value={plugin.slug}
-                                            className="lexia-command-result"
-                                            onMouseEnter={() => setSelectedIndex(index)}
-                                            onSelect={() => {
-                                                if (!plugin.installed) {
-                                                    installPlugin(plugin.slug);
-                                                } else if (plugin.installed && !plugin.active) {
-                                                    activatePlugin(plugin.slug);
-                                                }
-                                            }}
-                                            data-selected={index === selectedIndex}
-                                        >
-                                            <div className="lexia-command-plugin-result px-4 w-10">
-                                                <img 
-                                                    className="install-plugin-icon w-100"
-                                                    src={plugin.icons && (plugin.icons["1x"] || plugin.icons["default"] || plugin.icons["svg"] || plugin.icons["2x"])}
-                                                    alt={`${plugin.name} icon`}
-                                                />
-                                            </div>
-                                            <div className="lexia-command-plugin-result-name w-20">
-                                                <span className="lexia-command-result-title">{plugin.name}</span>
-                                            </div>
-                                            <div className="lexia-command-result-details w-65">
-                                                <p className="lexia-command-result-description">{plugin.short_description}</p>
-                                                <br/>
-                                                <span className="lexia-command-result-rating">
-                                                    {"⭐".repeat(Math.round(plugin.rating / 20))} {(plugin.rating / 20).toFixed(1)} 
-                                                </span>
-                                                <br/>
-                                                <span className="lexia-command-result-installs">
-                                                    {new Intl.NumberFormat().format(plugin.active_installs)}+ active installs
-                                                </span>
-                                            </div>
-                                            <div className="lexia-command-result-meta w-5">
-                                                {!plugin.installed && (
-                                                    <span>
-                                                        {installingPlugin === plugin.slug ? (
-                                                            <span className="loading-spinner">⌛</span>
-                                                        ) : (
-                                                            <span className="lexia-command-shortcut">Enter to install</span>
-                                                        )}
-                                                    </span>
-                                                )}
-                                                {plugin.installed && !plugin.active && (
-                                                    <span>
-                                                        {activatingPlugin === plugin.slug ? (
-                                                            <span className="loading-spinner">⌛</span>
-                                                        ) : (
-                                                            <span className="lexia-command-shortcut">Enter to activate</span>
-                                                        )}
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </Command.Item>
-                                    ))}
-                                </Command.Group>
-                            ) : searchTerm ? (
-                                <Command.Empty className="lexia-command-no-results">
-                                    {__('No plugins found', 'lexia-command')}
-                                </Command.Empty>
-                            ) : (
-                                <Command.Empty className="lexia-command-empty-state">
-                                    {__('Search for WordPress plugins...', 'lexia-command')}
-                                </Command.Empty>
-                            )
+                            <PluginSearchResults
+                                pluginResults={pluginResults}
+                                searchTerm={searchTerm}
+                                selectedIndex={selectedIndex}
+                                setSelectedIndex={setSelectedIndex}
+                                installPlugin={installPlugin}
+                                activatePlugin={activatePlugin}
+                                installingPlugin={installingPlugin}
+                                activatingPlugin={activatingPlugin}
+                            />
                         ) : results.length > 0 ? (
-                            <Command.Group>
-                                {results.map((result, index) => (
-                                    <Command.Item
-                                        key={result.id || index}
-                                        value={result.id || String(index)}
-                                        className="lexia-command-result"
-                                        onSelect={() => {
-                                            const shouldClose = result.action(closeCommandBar);
-                                            if (shouldClose !== false) {
-                                                closeCommandBar();
-                                            }
-                                        }}
-                                        onMouseEnter={() => setSelectedIndex(index)}
-                                        data-selected={index === selectedIndex}
-                                    >
-                                        <span className="lexia-command-result-icon">{result.icon}</span>
-                                        <span className="lexia-command-result-title">{result.title}</span>
-                                    </Command.Item>
-                                ))}
-                            </Command.Group>
+                            <SearchResults 
+                                results={results}
+                                selectedIndex={selectedIndex}
+                                setSelectedIndex={setSelectedIndex}
+                                closeCommandBar={closeCommandBar}
+                            />
                         ) : searchTerm ? (
                             <Command.Empty className="lexia-command-no-results">
                                 {__('No results found', 'lexia-command')}
