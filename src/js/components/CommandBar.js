@@ -4,7 +4,7 @@ import apiFetch from '@wordpress/api-fetch';
 import { Command } from 'cmdk';
 import { useKeyboardShortcut } from '../hooks/useKeyboardShortcut';
 import { usePluginManager } from '../hooks/usePluginManager';
-import { searchCommands } from '../commands';
+import { searchCommands, commands } from '../commands';
 import PluginSearchResults from './PluginSearchResults';
 import SearchResults from './SearchResults';
 import '../css/command-bar.css';
@@ -34,6 +34,30 @@ function CommandBar() {
         activatePlugin 
     } = usePluginManager();
 
+    // Filter available commands based on user capabilities
+    const getAvailableCommands = useCallback(() => {
+        return commands.filter(command => {
+            // Check if user has required capabilities
+            if (command.category === 'plugins' && !window.lexiaCommandData.userCaps.manage_options) {
+                return false;
+            }
+            if (command.category === 'settings' && !window.lexiaCommandData.userCaps.manage_options) {
+                return false;
+            }
+            if (command.category === 'users' && !window.lexiaCommandData.userCaps.manage_options) {
+                return false;
+            }
+            return true;
+        });
+    }, []);
+
+    // Load initial commands when command bar opens
+    useEffect(() => {
+        if (isOpen && !isPluginSearch && !searchTerm) {
+            setResults(getAvailableCommands());
+        }
+    }, [isOpen, isPluginSearch, searchTerm, getAvailableCommands]);
+
     // Fetch plugin statuses when plugin search is initiated
     useEffect(() => {
         const handlePluginSearch = () => {
@@ -58,8 +82,12 @@ function CommandBar() {
         }
         
         if (!searchTerm) {
-            setResults([]);
-            setPluginResults([]);
+            if (!isPluginSearch) {
+                // Show all available commands when no search term
+                setResults(getAvailableCommands());
+            } else {
+                setPluginResults([]);
+            }
             setSelectedIndex(0);
             return;
         }
@@ -121,7 +149,7 @@ function CommandBar() {
         }, 300);
 
         return () => clearTimeout(searchTimer);
-    }, [searchTerm, isPluginSearch, pluginStatuses, currentPage]);
+    }, [searchTerm, isPluginSearch, pluginStatuses, currentPage, getAvailableCommands]);
 
     const openCommandBar = useCallback(() => {
         setIsOpen(true);
@@ -316,9 +344,12 @@ function CommandBar() {
                                 {__('No results found', 'lexia-command')}
                             </Command.Empty>
                         ) : (
-                            <Command.Empty className="lexia-command-empty-state">
-                                {__('Start typing to search...', 'lexia-command')}
-                            </Command.Empty>
+                            <SearchResults 
+                                results={getAvailableCommands()}
+                                selectedIndex={selectedIndex}
+                                setSelectedIndex={setSelectedIndex}
+                                closeCommandBar={closeCommandBar}
+                            />
                         )}
                     </Command.List>
                 </div>
