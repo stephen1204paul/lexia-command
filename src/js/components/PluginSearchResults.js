@@ -9,12 +9,14 @@ function PluginSearchResults({
     installPlugin, 
     activatePlugin, 
     installingPlugin, 
-    activatingPlugin 
+    activatingPlugin,
+    loadingMore,
+    hasMorePages
 }) {
     if (pluginResults.length > 0) {
         return (
             <Command.Group>
-                {pluginResults.slice(0, 10).map((plugin, index) => (
+                {pluginResults.map((plugin, index) => (
                     <Command.Item
                         key={plugin.slug}
                         value={plugin.slug}
@@ -72,6 +74,20 @@ function PluginSearchResults({
                         </div>
                     </Command.Item>
                 ))}
+                {loadingMore && (
+                    <Command.Item className="lexia-command-loading-more" value="loading-more">
+                        <div className="lexia-command-loading-indicator">
+                            {__('Loading more plugins...', 'lexia-command')}
+                        </div>
+                    </Command.Item>
+                )}
+                {!loadingMore && hasMorePages && (
+                    <Command.Item className="lexia-command-scroll-hint" value="scroll-hint">
+                        <div className="lexia-command-scroll-hint-text">
+                            {__('Scroll for more results', 'lexia-command')}
+                        </div>
+                    </Command.Item>
+                )}
             </Command.Group>
         );
     } else if (searchTerm) {
