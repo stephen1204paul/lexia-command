@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from '@wordpress/element';
+import { useState, useEffect, useCallback, useRef } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 import { Command } from 'cmdk';
@@ -20,6 +20,9 @@ function CommandBar() {
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(0);
     const [loadingMore, setLoadingMore] = useState(false);
+    
+    // Use a ref to track if we're currently loading more results
+    const isLoadingMoreRef = useRef(false);
     
     // Use the plugin manager hook
     const { 
@@ -49,11 +52,22 @@ function CommandBar() {
 
     // Search handler
     useEffect(() => {
+        // Skip search if we're currently loading more results via infinite scroll
+        if (isLoadingMoreRef.current) {
+            return;
+        }
+        
         if (!searchTerm) {
             setResults([]);
             setPluginResults([]);
             setSelectedIndex(0);
             return;
+        }
+
+        // Reset to page 1 when search term changes
+        if (isPluginSearch && currentPage !== 1) {
+            setCurrentPage(1);
+            return; // Let the effect run again with page 1
         }
 
         const searchTimer = setTimeout(async () => {
@@ -131,7 +145,10 @@ function CommandBar() {
             return;
         }
         
+        // Set both state and ref to prevent race conditions
         setLoadingMore(true);
+        isLoadingMoreRef.current = true;
+        
         try {
             const nextPage = currentPage + 1;
             const response = await fetch(`https://api.wordpress.org/plugins/info/1.2/?action=query_plugins&per_page=10&page=${nextPage}&search=${encodeURIComponent(searchTerm)}`);
@@ -148,14 +165,26 @@ function CommandBar() {
                 };
             });
             
-            setPluginResults(prevResults => [...prevResults, ...enhancedPlugins]);
+            // Check for duplicates before adding new results
+            const existingPluginSlugs = new Set(pluginResults.map(p => p.slug));
+            const uniqueNewPlugins = enhancedPlugins.filter(plugin => !existingPluginSlugs.has(plugin.slug));
+            
+            // Update results without triggering the main search effect
+            setPluginResults(prevResults => [...prevResults, ...uniqueNewPlugins]);
             setCurrentPage(nextPage);
         } catch (error) {
             console.error('Failed to load more plugins:', error);
         } finally {
             setLoadingMore(false);
+            // Small delay to prevent immediate re-triggering
+            setTimeout(() => {
+                isLoadingMoreRef.current = false;
+            }, 100);
         }
     };
+    
+    // Use a debounced scroll handler to prevent too many calls
+    const scrollTimerRef = useRef(null);
     
     // Handle scroll event to implement infinite scroll
     useEffect(() => {
@@ -164,10 +193,18 @@ function CommandBar() {
         }
         
         const handleScroll = (event) => {
-            const element = event.target;
-            if (element.scrollHeight - element.scrollTop <= element.clientHeight * 1.5) {
-                loadMorePlugins();
+            // Clear any existing timer
+            if (scrollTimerRef.current) {
+                clearTimeout(scrollTimerRef.current);
             }
+            
+            // Set a new timer to debounce scroll events
+            scrollTimerRef.current = setTimeout(() => {
+                const element = event.target;
+                if (element.scrollHeight - element.scrollTop <= element.clientHeight * 1.5) {
+                    loadMorePlugins();
+                }
+            }, 150);
         };
         
         const resultsContainer = document.querySelector('.lexia-command-results');
@@ -178,6 +215,9 @@ function CommandBar() {
         return () => {
             if (resultsContainer) {
                 resultsContainer.removeEventListener('scroll', handleScroll);
+            }
+            if (scrollTimerRef.current) {
+                clearTimeout(scrollTimerRef.current);
             }
         };
     }, [isOpen, isPluginSearch, currentPage, totalPages, loadingMore, searchTerm]);
@@ -247,7 +287,7 @@ function CommandBar() {
                     />
                     
                     <Command.List className="lexia-command-results">
-                        {loading && !installingPlugin && !activatingPlugin ? (
+                        {loading && !loadingMore && !installingPlugin && !activatingPlugin ? (
                             <Command.Empty className="lexia-command-loading">
                                 {__('Searching...', 'lexia-command')}
                             </Command.Empty>
