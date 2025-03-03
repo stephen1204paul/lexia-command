@@ -144,6 +144,45 @@ class Lexia_Command {
 				),
 			),
 		));
+
+		register_rest_route('lexia-command/v1', '/install-plugin', array(
+			'methods' => WP_REST_Server::CREATABLE,
+			'callback' => array($this, 'handle_install_plugin'),
+			'permission_callback' => function () {
+				return current_user_can('install_plugins');
+			},
+			'args' => array(
+				'slug' => array(
+					'required' => true,
+					'type' => 'string',
+					'sanitize_callback' => 'sanitize_text_field',
+				),
+			),
+		));
+
+		register_rest_route('lexia-command/v1', '/activate-plugin', array(
+			'methods' => WP_REST_Server::CREATABLE,
+			'callback' => array($this, 'handle_activate_plugin'),
+			'permission_callback' => function () {
+				return current_user_can('activate_plugins');
+			},
+			'args' => array(
+				'slug' => array(
+					'required' => true,
+					'type' => 'string',
+					'sanitize_callback' => 'sanitize_text_field',
+				),
+			),
+		));
+
+		// Add new endpoint for getting plugin statuses
+		register_rest_route('lexia-command/v1', '/get-plugin-statuses', array(
+			'methods' => WP_REST_Server::READABLE,
+			'callback' => array($this, 'handle_get_plugin_statuses'),
+			'permission_callback' => function () {
+				return current_user_can('install_plugins');
+			},
+		));
 	}
 
 	public function handle_search($request) {
@@ -169,6 +208,86 @@ class Lexia_Command {
 		return new WP_REST_Response(array(
 			'success' => true,
 			'data' => $results,
+		));
+	}
+
+	public function handle_install_plugin($request) {
+		if (!current_user_can('install_plugins')) {
+			return new WP_Error('rest_forbidden', __('Sorry, you are not allowed to install plugins.'), array('status' => 403));
+		}
+
+		$slug = sanitize_text_field($request->get_param('slug'));
+		require_once ABSPATH . 'wp-admin/includes/plugin-install.php';
+		require_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
+		require_once ABSPATH . 'wp-admin/includes/class-wp-ajax-upgrader-skin.php';
+		require_once ABSPATH . 'wp-admin/includes/file.php';
+
+		// Get plugin information
+		$api = plugins_api('plugin_information', array('slug' => $slug));
+		if (is_wp_error($api)) {
+			return new WP_Error('plugin_api_error', $api->get_error_message(), array('status' => 400));
+		}
+
+		$skin = new WP_Ajax_Upgrader_Skin();
+		$upgrader = new Plugin_Upgrader($skin);
+		$result = $upgrader->install($api->download_link);
+
+		if (is_wp_error($result)) {
+			return new WP_Error('plugin_install_error', $result->get_error_message(), array('status' => 400));
+		}
+
+		return new WP_REST_Response(array(
+			'success' => true,
+			'message' => __('Plugin installed successfully.'),
+		));
+	}
+
+	public function handle_activate_plugin($request) {
+		if (!current_user_can('activate_plugins')) {
+			return new WP_Error('rest_forbidden', __('Sorry, you are not allowed to activate plugins.'), array('status' => 403));
+		}
+
+		$slug = sanitize_text_field($request->get_param('slug'));
+		$plugins = get_plugins();
+		$plugin_file = false;
+
+		// Find the plugin file based on the slug
+		foreach ($plugins as $file => $data) {
+			if (strpos($file, $slug . '/') === 0 || $file === $slug . '.php') {
+				$plugin_file = $file;
+				break;
+			}
+		}
+
+		if (!$plugin_file) {
+			return new WP_Error('plugin_not_found', __('Plugin not found.'), array('status' => 404));
+		}
+
+		$result = activate_plugin($plugin_file);
+		if (is_wp_error($result)) {
+			return new WP_Error('plugin_activation_error', $result->get_error_message(), array('status' => 400));
+		}
+
+		return new WP_REST_Response(array(
+			'success' => true,
+			'message' => __('Plugin activated successfully.'),
+		));
+	}
+
+	/**
+	 * Handle the request to get plugin statuses
+	 *
+	 * @param WP_REST_Request $request The request object
+	 * @return WP_REST_Response Response with plugin statuses
+	 */
+	public function handle_get_plugin_statuses($request) {
+		require_once plugin_dir_path(dirname(__FILE__)) . 'includes/class-lexia-command-plugin-status.php';
+		
+		$plugin_statuses = Lexia_Command_Plugin_Status::get_plugin_statuses();
+		
+		return new WP_REST_Response(array(
+			'success' => true,
+			'data' => $plugin_statuses,
 		));
 	}
 }

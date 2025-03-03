@@ -11,7 +11,7 @@
  * Plugin Name:       Lexia Command
  * Plugin URI:        https://github.com/stephen1204paul/lexia-command
  * Description:       A powerful, keyboard-driven command bar for WordPress, inspired by macOS Spotlight.
- * Version:           1.0.1
+ * Version:           1.1.0
  * Author:            Stephen Paul
  * Author URI:        https://profiles.wordpress.org/stephen1204paul/
  * License:           GPL-2.0+
@@ -29,7 +29,7 @@ if (!defined('WPINC')) {
  * Currently plugin version.
  * Start at version 1.0.0 and use SemVer - https://semver.org
  */
-define('LEXIA_COMMAND_VERSION', '1.0.1');
+define('LEXIA_COMMAND_VERSION', '1.1.0');
 
 /**
  * The code that runs during plugin activation.

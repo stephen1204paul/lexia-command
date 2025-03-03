@@ -3,7 +3,7 @@ Contributors: stephen1204paul
 Tags: command-bar, productivity, spotlight, search, keyboard-shortcuts
 Requires at least: 6.0
 Tested up to: 6.7
-Stable tag: 1.0.1
+Stable tag: 1.1.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -72,6 +72,11 @@ Please visit our [GitHub repository](https://github.com/stephen1204paul/lexia-co
 
 == Changelog ==
 
+= 1.1.0 =
+* Updated plugin core for improved performance and compatibility
+* Enhanced command bar interface
+* Added new keyboard shortcuts for faster navigation
+
 = 1.0.1 =
 * Added feedback notice for collecting feedback
 
@@ -83,6 +88,11 @@ Please visit our [GitHub repository](https://github.com/stephen1204paul/lexia-co
 * Support for custom commands
 
 == Upgrade Notice ==
+
+= 1.1.0 =
+* Updated plugin core for improved performance and compatibility
+* Enhanced command bar interface
+* Added new keyboard shortcuts for faster navigation
 
 = 1.0.1 =
 * Added feedback notice for collecting feedback

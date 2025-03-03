@@ -1,6 +1,6 @@
 {
   "name": "lexia-command",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "A powerful, keyboard-driven command bar for WordPress",
   "scripts": {
     "build": "wp-scripts build",
