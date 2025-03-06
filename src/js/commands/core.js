@@ -2,6 +2,7 @@ import { __ } from '@wordpress/i18n';
 import { COMMAND_TYPES, COMMAND_CATEGORIES } from './types';
 
 export const coreCommands = [
+    // Removed duplicate search-pages command that was conflicting with the one in pages.js
     {
         id: 'create-page',
         type: COMMAND_TYPES.CREATE,
@@ -39,7 +40,7 @@ export const coreCommands = [
         id: 'settings',
         type: COMMAND_TYPES.MANAGE,
         category: COMMAND_CATEGORIES.SETTINGS,
-        title: __('Site Settings', 'lexia-command'),
+        title: __('Site Setting', 'lexia-command'),
         keywords: ['settings', 'options', 'configure'],
         icon: '⚙️',
         action: () => {

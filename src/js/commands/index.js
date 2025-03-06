@@ -1,11 +1,13 @@
 import { COMMAND_TYPES, COMMAND_CATEGORIES } from './types';
 import { coreCommands } from './core';
 import { pluginCommands } from './plugins';
+import { pageCommands } from './pages';
 
 // Command definitions
 export const commands = [
     ...coreCommands,
     ...pluginCommands,
+    ...pageCommands,
 ];
 
 // Search commands

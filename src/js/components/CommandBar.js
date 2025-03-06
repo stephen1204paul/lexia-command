@@ -4,25 +4,45 @@ import apiFetch from '@wordpress/api-fetch';
 import { Command } from 'cmdk';
 import { useKeyboardShortcut } from '../hooks/useKeyboardShortcut';
 import { usePluginManager } from '../hooks/usePluginManager';
+import { useSearchManager } from '../hooks/useSearchManager';
 import { searchCommands, commands } from '../commands';
+import { COMMAND_CATEGORIES } from '../commands/types';
 import PluginSearchResults from './PluginSearchResults';
+import PageSearchResults from './PageSearchResults';
 import SearchResults from './SearchResults';
 import '../css/command-bar.css';
 
 function CommandBar() {
     const [isOpen, setIsOpen] = useState(false);
-    const [searchTerm, setSearchTerm] = useState('');
     const [results, setResults] = useState([]);
-    const [loading, setLoading] = useState(false);
-    const [selectedIndex, setSelectedIndex] = useState(0);
     const [isPluginSearch, setIsPluginSearch] = useState(false);
+    const [isPageSearch, setIsPageSearch] = useState(false);
     const [pluginResults, setPluginResults] = useState([]);
-    const [currentPage, setCurrentPage] = useState(1);
-    const [totalPages, setTotalPages] = useState(0);
-    const [loadingMore, setLoadingMore] = useState(false);
+    const [pageResults, setPageResults] = useState([]);
     
-    // Use a ref to track if we're currently loading more results
-    const isLoadingMoreRef = useRef(false);
+    // Use the search manager hook for common search functionality
+    const {
+        searchTerm,
+        loading,
+        currentPage,
+        totalPages,
+        loadingMore,
+        selectedIndex,
+        isLoadingMoreRef,
+        setSearchTerm,
+        setLoading,
+        setCurrentPage,
+        setTotalPages,
+        setLoadingMore,
+        setSelectedIndex,
+        resetSearch,
+        handleSearchTermChange,
+        searchPlugins,
+        searchPages,
+        searchCommandsAndContent,
+        loadMore,
+        setupScrollHandler
+    } = useSearchManager();
     
     // Use the plugin manager hook
     const { 
@@ -38,13 +58,13 @@ function CommandBar() {
     const getAvailableCommands = useCallback(() => {
         return commands.filter(command => {
             // Check if user has required capabilities
-            if (command.category === 'plugins' && !window.lexiaCommandData.userCaps.manage_options) {
+            if (command.category === COMMAND_CATEGORIES.PLUGINS && !window.lexiaCommandData.userCaps.manage_options) {
                 return false;
             }
-            if (command.category === 'settings' && !window.lexiaCommandData.userCaps.manage_options) {
+            if (command.category === COMMAND_CATEGORIES.SETTINGS && !window.lexiaCommandData.userCaps.manage_options) {
                 return false;
             }
-            if (command.category === 'users' && !window.lexiaCommandData.userCaps.manage_options) {
+            if (command.category === COMMAND_CATEGORIES.USERS && !window.lexiaCommandData.userCaps.manage_options) {
                 return false;
             }
             return true;
@@ -53,26 +73,39 @@ function CommandBar() {
 
     // Load initial commands when command bar opens
     useEffect(() => {
-        if (isOpen && !isPluginSearch && !searchTerm) {
+        if (isOpen && !isPluginSearch && !isPageSearch && !searchTerm) {
             setResults(getAvailableCommands());
         }
-    }, [isOpen, isPluginSearch, searchTerm, getAvailableCommands]);
+    }, [isOpen, isPluginSearch, isPageSearch, searchTerm, getAvailableCommands]);
 
     // Fetch plugin statuses when plugin search is initiated
     useEffect(() => {
         const handlePluginSearch = () => {
             setIsPluginSearch(true);
-            setSearchTerm('');
+            setIsPageSearch(false);
+            resetSearch();
             setResults([]);
             setPluginResults([]);
-            setCurrentPage(1);
-            setTotalPages(0);
             fetchPluginStatuses();
         };
 
         window.addEventListener('lexiaCommand:showPluginSearch', handlePluginSearch);
         return () => window.removeEventListener('lexiaCommand:showPluginSearch', handlePluginSearch);
-    }, [fetchPluginStatuses]);
+    }, [fetchPluginStatuses, resetSearch]);
+    
+    // Handle page search
+    useEffect(() => {
+        const handlePageSearch = () => {
+            setIsPageSearch(true);
+            setIsPluginSearch(false);
+            resetSearch();
+            setResults([]);
+            setPageResults([]);
+        };
+
+        window.addEventListener('lexiaCommand:showPageSearch', handlePageSearch);
+        return () => window.removeEventListener('lexiaCommand:showPageSearch', handlePageSearch);
+    }, [resetSearch]);
 
     // Search handler
     useEffect(() => {
@@ -82,11 +115,13 @@ function CommandBar() {
         }
         
         if (!searchTerm) {
-            if (!isPluginSearch) {
+            if (!isPluginSearch && !isPageSearch) {
                 // Show all available commands when no search term
                 setResults(getAvailableCommands());
-            } else {
+            } else if (isPluginSearch) {
                 setPluginResults([]);
+            } else if (isPageSearch) {
+                setPageResults([]);
             }
             setSelectedIndex(0);
             return;
@@ -103,44 +138,20 @@ function CommandBar() {
             try {
                 if (isPluginSearch) {
                     // Search WordPress plugin repository
-                    const response = await fetch(`https://api.wordpress.org/plugins/info/1.2/?action=query_plugins&per_page=10&page=${currentPage}&search=${encodeURIComponent(searchTerm)}`);
-                    const data = await response.json();
-                    
-                    // Merge plugin data with local status information
-                    const plugins = data.plugins || [];
-                    const enhancedPlugins = plugins.map(plugin => {
-                        const status = pluginStatuses[plugin.slug] || {};
-                        return {
-                            ...plugin,
-                            installed: status.installed || false,
-                            active: status.active || false
-                        };
-                    });
-                    
+                    const enhancedPlugins = await searchPlugins(searchTerm, currentPage, pluginStatuses);
                     setPluginResults(currentPage === 1 ? enhancedPlugins : prevResults => [...prevResults, ...enhancedPlugins]);
-                    setTotalPages(Math.ceil(data.info?.results || 0) / 10);
+                } else if (isPageSearch) {
+                    // Search for pages
+                    const pages = await searchPages(searchTerm);
+                    setPageResults(pages);
                 } else {
                     // Regular command and content search
-                    const commandResults = searchCommands(searchTerm);
-                    const queryString = new URLSearchParams({ query: searchTerm }).toString();
-                    const response = await apiFetch({
-                        path: `/${window.lexiaCommandData.restNamespace}/search?${queryString}`,
-                        method: 'GET'
-                    });
-                    setResults([
-                        ...commandResults,
-                        ...response.data.map(item => ({
-                            ...item,
-                            icon: '📝',
-                            action: () => {
-                                window.location.href = item.url;
-                            }
-                        }))
-                    ]);
+                    const searchResults = await searchCommandsAndContent(searchTerm, searchCommands);
+                    setResults(searchResults);
                 }
             } catch (error) {
                 console.error('Search failed:', error);
-                if (!isPluginSearch) {
+                if (!isPluginSearch && !isPageSearch) {
                     setResults(searchCommands(searchTerm) || []);
                 }
             } finally {
@@ -149,23 +160,24 @@ function CommandBar() {
         }, 300);
 
         return () => clearTimeout(searchTimer);
-    }, [searchTerm, isPluginSearch, pluginStatuses, currentPage, getAvailableCommands]);
+    }, [searchTerm, isPluginSearch, isPageSearch, pluginStatuses, currentPage, getAvailableCommands, 
+        searchPlugins, searchPages, searchCommandsAndContent, isLoadingMoreRef, setCurrentPage, 
+        setLoading, setSelectedIndex]);
 
     const openCommandBar = useCallback(() => {
         setIsOpen(true);
         setSelectedIndex(0);
-    }, []);
+    }, [setSelectedIndex]);
 
     const closeCommandBar = useCallback(() => {
         setIsOpen(false);
-        setSearchTerm('');
+        resetSearch();
         setResults([]);
         setPluginResults([]);
-        setSelectedIndex(0);
+        setPageResults([]);
         setIsPluginSearch(false);
-        setCurrentPage(1);
-        setTotalPages(0);
-    }, []);
+        setIsPageSearch(false);
+    }, [resetSearch]);
     
     // Function to load more plugin results
     const loadMorePlugins = async () => {
@@ -173,25 +185,8 @@ function CommandBar() {
             return;
         }
         
-        // Set both state and ref to prevent race conditions
-        setLoadingMore(true);
-        isLoadingMoreRef.current = true;
-        
-        try {
-            const nextPage = currentPage + 1;
-            const response = await fetch(`https://api.wordpress.org/plugins/info/1.2/?action=query_plugins&per_page=10&page=${nextPage}&search=${encodeURIComponent(searchTerm)}`);
-            const data = await response.json();
-            
-            // Merge plugin data with local status information
-            const plugins = data.plugins || [];
-            const enhancedPlugins = plugins.map(plugin => {
-                const status = pluginStatuses[plugin.slug] || {};
-                return {
-                    ...plugin,
-                    installed: status.installed || false,
-                    active: status.active || false
-                };
-            });
+        await loadMore(async (nextPage) => {
+            const enhancedPlugins = await searchPlugins(searchTerm, nextPage, pluginStatuses);
             
             // Check for duplicates before adding new results
             const existingPluginSlugs = new Set(pluginResults.map(p => p.slug));
@@ -199,56 +194,13 @@ function CommandBar() {
             
             // Update results without triggering the main search effect
             setPluginResults(prevResults => [...prevResults, ...uniqueNewPlugins]);
-            setCurrentPage(nextPage);
-        } catch (error) {
-            console.error('Failed to load more plugins:', error);
-        } finally {
-            setLoadingMore(false);
-            // Small delay to prevent immediate re-triggering
-            setTimeout(() => {
-                isLoadingMoreRef.current = false;
-            }, 100);
-        }
+        });
     };
-    
-    // Use a debounced scroll handler to prevent too many calls
-    const scrollTimerRef = useRef(null);
     
     // Handle scroll event to implement infinite scroll
     useEffect(() => {
-        if (!isOpen || !isPluginSearch) {
-            return;
-        }
-        
-        const handleScroll = (event) => {
-            // Clear any existing timer
-            if (scrollTimerRef.current) {
-                clearTimeout(scrollTimerRef.current);
-            }
-            
-            // Set a new timer to debounce scroll events
-            scrollTimerRef.current = setTimeout(() => {
-                const element = event.target;
-                if (element.scrollHeight - element.scrollTop <= element.clientHeight * 1.5) {
-                    loadMorePlugins();
-                }
-            }, 150);
-        };
-        
-        const resultsContainer = document.querySelector('.lexia-command-results');
-        if (resultsContainer) {
-            resultsContainer.addEventListener('scroll', handleScroll);
-        }
-        
-        return () => {
-            if (resultsContainer) {
-                resultsContainer.removeEventListener('scroll', handleScroll);
-            }
-            if (scrollTimerRef.current) {
-                clearTimeout(scrollTimerRef.current);
-            }
-        };
-    }, [isOpen, isPluginSearch, currentPage, totalPages, loadingMore, searchTerm]);
+        return setupScrollHandler(isOpen, isPluginSearch, loadMorePlugins);
+    }, [isOpen, isPluginSearch, currentPage, totalPages, loadingMore, searchTerm, setupScrollHandler]);
 
     // Register keyboard shortcut
     useKeyboardShortcut(
@@ -259,27 +211,24 @@ function CommandBar() {
         }
     );
 
-    // Add keyboard shortcut for Backspace/Delete to return to main search from plugin search
-    useKeyboardShortcut(
-        { key: 'Backspace' },
-        (event) => {
-            if (isOpen && isPluginSearch && !searchTerm) {
+    // Handle navigation key shortcuts
+    const handleNavigationKeyShortcut = useCallback((event) => {
+        if (isOpen && !searchTerm) {
+            if (isPluginSearch) {
                 event.preventDefault();
                 setIsPluginSearch(false);
+            } else if (isPageSearch) {
+                event.preventDefault();
+                setIsPageSearch(false);
             }
         }
-    );
+    }, [isOpen, isPluginSearch, isPageSearch, searchTerm]);
+
+    // Add keyboard shortcut for Backspace/Delete to return to main search from plugin search
+    useKeyboardShortcut({ key: 'Backspace' }, handleNavigationKeyShortcut);
 
     // Also handle Delete key the same way
-    useKeyboardShortcut(
-        { key: 'Delete' },
-        (event) => {
-            if (isOpen && isPluginSearch && !searchTerm) {
-                event.preventDefault();
-                setIsPluginSearch(false);
-            }
-        }
-    );
+    useKeyboardShortcut({ key: 'Delete' }, handleNavigationKeyShortcut);
 
     if (!isOpen) {
         return null;
@@ -290,7 +239,9 @@ function CommandBar() {
             <Command className="lexia-command-modal" label="Command Menu">
                 <div className="components-modal__header">
                     <div className="components-modal__header-heading">
-                        {isPluginSearch ? __('Search WordPress Plugins', 'lexia-command') : __('LexiaCommand', 'lexia-command')}
+                        {isPluginSearch ? __('Search WordPress Plugins', 'lexia-command') : 
+                         isPageSearch ? __('Search Pages', 'lexia-command') : 
+                         __('LexiaCommand', 'lexia-command')}
                     </div>
                     <button 
                         type="button" 
@@ -307,8 +258,10 @@ function CommandBar() {
                 <div className="lexia-command-container">
                     <Command.Input 
                         value={searchTerm}
-                        onValueChange={setSearchTerm}
-                        placeholder={isPluginSearch ? __('Search for plugins...', 'lexia-command') : __('Type a command or search...', 'lexia-command')}
+                        onValueChange={handleSearchTermChange}
+                        placeholder={isPluginSearch ? __('Search for plugins...', 'lexia-command') : 
+                                   isPageSearch ? __('Search for pages...', 'lexia-command') : 
+                                   __('Type a command or search...', 'lexia-command')}
                         className="lexia-command-search"
                         autoComplete="off"
                         autoFocus
@@ -331,6 +284,16 @@ function CommandBar() {
                                 activatingPlugin={activatingPlugin}
                                 loadingMore={loadingMore}
                                 hasMorePages={currentPage < totalPages}
+                            />
+                        ) : isPageSearch ? (
+                            <PageSearchResults
+                                pageResults={pageResults}
+                                searchTerm={searchTerm}
+                                selectedIndex={selectedIndex}
+                                setSelectedIndex={setSelectedIndex}
+                                loadingMore={loadingMore}
+                                hasMorePages={currentPage < totalPages}
+                                closeCommandBar={closeCommandBar}
                             />
                         ) : results.length > 0 ? (
                             <SearchResults 
