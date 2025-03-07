@@ -15,8 +15,8 @@ function PageSearchResults({
             <Command.Group>
                 {pageResults.map((page, index) => (
                     <Command.Item
-                        key={page.id}
-                        value={page.id}
+                        key={`search-page-`+page.id}
+                        value={`search-page-`+page.id}
                         className="lexia-command-result"
                         onMouseEnter={() => setSelectedIndex(index)}
                         onSelect={() => {

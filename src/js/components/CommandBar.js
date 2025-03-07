@@ -95,17 +95,27 @@ function CommandBar() {
     
     // Handle page search
     useEffect(() => {
-        const handlePageSearch = () => {
+        const handlePageSearch = async () => {
             setIsPageSearch(true);
             setIsPluginSearch(false);
             resetSearch();
             setResults([]);
-            setPageResults([]);
+            
+            // Immediately fetch all pages when page search is opened
+            setLoading(true);
+            try {
+                const pages = await searchPages('');
+                setPageResults(pages);
+            } catch (error) {
+                console.error('Failed to fetch pages:', error);
+            } finally {
+                setLoading(false);
+            }
         };
 
         window.addEventListener('lexiaCommand:showPageSearch', handlePageSearch);
         return () => window.removeEventListener('lexiaCommand:showPageSearch', handlePageSearch);
-    }, [resetSearch]);
+    }, [resetSearch, searchPages, setLoading]);
 
     // Search handler
     useEffect(() => {
@@ -121,7 +131,15 @@ function CommandBar() {
             } else if (isPluginSearch) {
                 setPluginResults([]);
             } else if (isPageSearch) {
-                setPageResults([]);
+                // When search term is cleared in page search, fetch all pages
+                setLoading(true);
+                searchPages('').then(pages => {
+                    setPageResults(pages);
+                    setLoading(false);
+                }).catch(error => {
+                    console.error('Failed to fetch pages:', error);
+                    setLoading(false);
+                });
             }
             setSelectedIndex(0);
             return;
@@ -197,10 +215,33 @@ function CommandBar() {
         });
     };
     
+    // Function to load more page results
+    const loadMorePages = async () => {
+        if (loadingMore || !isPageSearch) {
+            return;
+        }
+        
+        await loadMore(async (nextPage) => {
+            const pages = await searchPages(searchTerm);
+            
+            // Check for duplicates before adding new results
+            const existingPageIds = new Set(pageResults.map(p => p.id));
+            const uniqueNewPages = pages.filter(page => !existingPageIds.has(page.id));
+            
+            // Update results without triggering the main search effect
+            setPageResults(prevResults => [...prevResults, ...uniqueNewPages]);
+        });
+    };
+    
     // Handle scroll event to implement infinite scroll
     useEffect(() => {
-        return setupScrollHandler(isOpen, isPluginSearch, loadMorePlugins);
-    }, [isOpen, isPluginSearch, currentPage, totalPages, loadingMore, searchTerm, setupScrollHandler]);
+        if (isPluginSearch) {
+            return setupScrollHandler(isOpen, isPluginSearch, loadMorePlugins);
+        } else if (isPageSearch) {
+            return setupScrollHandler(isOpen, isPageSearch, loadMorePages);
+        }
+        return () => {};
+    }, [isOpen, isPluginSearch, isPageSearch, currentPage, totalPages, loadingMore, searchTerm, setupScrollHandler, loadMorePlugins, loadMorePages]);
 
     // Register keyboard shortcut
     useKeyboardShortcut(
