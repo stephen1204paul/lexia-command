@@ -151,6 +151,29 @@ function CommandBar() {
             return; // Let the effect run again with page 1
         }
 
+        // For command search (not plugin or page search), execute immediately
+        if (!isPluginSearch && !isPageSearch) {
+            setLoading(true);
+            (async () => {
+                try {
+                    // First set immediate results from local command search
+                    const commandResults = searchCommands(searchTerm) || [];
+                    setResults(commandResults);
+                    
+                    // Then fetch content search results with API call
+                    const searchResults = await searchCommandsAndContent(searchTerm, searchCommands);
+                    setResults(searchResults);
+                } catch (error) {
+                    console.error('Search failed:', error);
+                    setResults(searchCommands(searchTerm) || []);
+                } finally {
+                    setLoading(false);
+                }
+            })();
+            return () => {}; // No timer to clear for immediate execution
+        }
+        
+        // For API-based searches (plugins and pages), use timeout to debounce
         const searchTimer = setTimeout(async () => {
             setLoading(true);
             try {
@@ -162,16 +185,9 @@ function CommandBar() {
                     // Search for pages
                     const pages = await searchPages(searchTerm);
                     setPageResults(pages);
-                } else {
-                    // Regular command and content search
-                    const searchResults = await searchCommandsAndContent(searchTerm, searchCommands);
-                    setResults(searchResults);
                 }
             } catch (error) {
                 console.error('Search failed:', error);
-                if (!isPluginSearch && !isPageSearch) {
-                    setResults(searchCommands(searchTerm) || []);
-                }
             } finally {
                 setLoading(false);
             }
