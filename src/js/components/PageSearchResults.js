@@ -1,5 +1,7 @@
 import { __ } from '@wordpress/i18n';
 import { Command } from 'cmdk';
+import { useState } from '@wordpress/element';
+import PageActionMenu from './PageActionMenu';
 
 function PageSearchResults({ 
     pageResults, 
@@ -10,6 +12,8 @@ function PageSearchResults({
     hasMorePages,
     closeCommandBar
 }) {
+    
+    // Otherwise show the search results
     if (pageResults.length > 0) {
         return (
             <Command.Group>
@@ -20,13 +24,9 @@ function PageSearchResults({
                         className="lexia-command-result"
                         onMouseEnter={() => setSelectedIndex(index)}
                         onSelect={() => {
-                            if(page.status === 'publish'){
-                                window.location.href = page.url;
-                                closeCommandBar();
-                            }else{
-                                window.location.href = `${window.lexiaCommandData.adminUrl}post.php?post=${page.id}&action=edit`;
-                                closeCommandBar();
-                            }
+                            // Dispatch an event to show the page action menu
+                            const event = new CustomEvent('lexiaCommand:showPageActionMenu', { detail: { page } });
+                            window.dispatchEvent(event);
                         }}
                         data-selected={index === selectedIndex}
                     >
@@ -38,7 +38,7 @@ function PageSearchResults({
                         </div>
                         <div className="lexia-command-result-meta w-15">
                             <span className="lexia-command-shortcut">
-                                {page.status === 'publish' ? __('Enter to view', 'lexia-command') : __('Enter to edit', 'lexia-command')}
+                                {__('Enter for options', 'lexia-command')}
                             </span>
                         </div>
                     </Command.Item>

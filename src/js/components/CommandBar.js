@@ -9,6 +9,7 @@ import { searchCommands, commands } from '../commands';
 import { COMMAND_CATEGORIES } from '../commands/types';
 import PluginSearchResults from './PluginSearchResults';
 import PageSearchResults from './PageSearchResults';
+import PageActionMenu from './PageActionMenu';
 import SearchResults from './SearchResults';
 import '../css/command-bar.css';
 
@@ -17,8 +18,10 @@ function CommandBar() {
     const [results, setResults] = useState([]);
     const [isPluginSearch, setIsPluginSearch] = useState(false);
     const [isPageSearch, setIsPageSearch] = useState(false);
+    const [isPageActionMenu, setIsPageActionMenu] = useState(false);
     const [pluginResults, setPluginResults] = useState([]);
     const [pageResults, setPageResults] = useState([]);
+    const [selectedPage, setSelectedPage] = useState(null);
     
     // Use the search manager hook for common search functionality
     const {
@@ -98,6 +101,8 @@ function CommandBar() {
         const handlePageSearch = async () => {
             setIsPageSearch(true);
             setIsPluginSearch(false);
+            setIsPageActionMenu(false);
+            setSelectedPage(null);
             resetSearch();
             setResults([]);
             
@@ -116,6 +121,23 @@ function CommandBar() {
         window.addEventListener('lexiaCommand:showPageSearch', handlePageSearch);
         return () => window.removeEventListener('lexiaCommand:showPageSearch', handlePageSearch);
     }, [resetSearch, searchPages, setLoading]);
+    
+    // Handle page action menu
+    useEffect(() => {
+        const handlePageActionMenu = (event) => {
+            const { page } = event.detail;
+            // First set the selected page
+            setSelectedPage(page);
+            // Then update the UI state to show the action menu
+            // This ensures the page data is available when the menu renders
+            setTimeout(() => {
+                setIsPageActionMenu(true);
+            }, 0);
+        };
+
+        window.addEventListener('lexiaCommand:showPageActionMenu', handlePageActionMenu);
+        return () => window.removeEventListener('lexiaCommand:showPageActionMenu', handlePageActionMenu);
+    }, []);
 
     // Search handler
     useEffect(() => {
@@ -211,6 +233,8 @@ function CommandBar() {
         setPageResults([]);
         setIsPluginSearch(false);
         setIsPageSearch(false);
+        setIsPageActionMenu(false);
+        setSelectedPage(null);
     }, [resetSearch]);
     
     // Function to load more plugin results
@@ -274,12 +298,16 @@ function CommandBar() {
             if (isPluginSearch) {
                 event.preventDefault();
                 setIsPluginSearch(false);
-            } else if (isPageSearch) {
+            } else if (isPageSearch && !isPageActionMenu) {
                 event.preventDefault();
                 setIsPageSearch(false);
+            } else if (isPageActionMenu) {
+                event.preventDefault();
+                setIsPageActionMenu(false);
+                setSelectedPage(null);
             }
         }
-    }, [isOpen, isPluginSearch, isPageSearch, searchTerm]);
+    }, [isOpen, isPluginSearch, isPageSearch, isPageActionMenu, searchTerm]);
 
     // Add keyboard shortcut for Backspace/Delete to return to main search from plugin search
     useKeyboardShortcut({ key: 'Backspace' }, handleNavigationKeyShortcut);
@@ -297,7 +325,8 @@ function CommandBar() {
                 <div className="components-modal__header">
                     <div className="components-modal__header-heading">
                         {isPluginSearch ? __('Search WordPress Plugins', 'lexia-command') : 
-                         isPageSearch ? __('Search Pages', 'lexia-command') : 
+                         isPageSearch && !isPageActionMenu ? __('Search Pages', 'lexia-command') :
+                         isPageActionMenu ? __('Page Actions', 'lexia-command') :
                          __('LexiaCommand', 'lexia-command')}
                     </div>
                     <button 
@@ -312,70 +341,85 @@ function CommandBar() {
                     </button>
                 </div>
                 
-                <div className="lexia-command-container">
-                    <Command.Input 
-                        value={searchTerm}
-                        onValueChange={handleSearchTermChange}
-                        placeholder={isPluginSearch ? __('Search for plugins...', 'lexia-command') : 
-                                   isPageSearch ? __('Search for pages...', 'lexia-command') : 
-                                   __('Type a command or search...', 'lexia-command')}
-                        className="lexia-command-search"
-                        autoComplete="off"
-                        autoFocus
-                    />
-                    
-                    <Command.List className="lexia-command-results">
-                        {loading && !loadingMore && !installingPlugin && !activatingPlugin ? (
-                            <Command.Empty className="lexia-command-loading">
-                                {__('Searching...', 'lexia-command')}
-                            </Command.Empty>
-                        ) : isPluginSearch ? (
-                            <PluginSearchResults
-                                pluginResults={pluginResults}
-                                searchTerm={searchTerm}
-                                selectedIndex={selectedIndex}
-                                setSelectedIndex={setSelectedIndex}
-                                installPlugin={installPlugin}
-                                activatePlugin={activatePlugin}
-                                installingPlugin={installingPlugin}
-                                activatingPlugin={activatingPlugin}
-                                loadingMore={loadingMore}
-                                hasMorePages={currentPage < totalPages}
-                            />
-                        ) : isPageSearch ? (
-                            <PageSearchResults
-                                pageResults={pageResults}
-                                searchTerm={searchTerm}
-                                selectedIndex={selectedIndex}
-                                setSelectedIndex={setSelectedIndex}
-                                loadingMore={loadingMore}
-                                hasMorePages={currentPage < totalPages}
-                                closeCommandBar={closeCommandBar}
-                            />
-                        ) : results.length > 0 ? (
-                            <SearchResults 
-                                results={results}
-                                selectedIndex={selectedIndex}
-                                setSelectedIndex={setSelectedIndex}
-                                closeCommandBar={closeCommandBar}
-                            />
-                        ) : searchTerm ? (
-                            <Command.Empty className="lexia-command-no-results">
-                                {__('No results found', 'lexia-command')}
-                            </Command.Empty>
-                        ) : (
-                            <SearchResults 
-                                results={getAvailableCommands()}
-                                selectedIndex={selectedIndex}
-                                setSelectedIndex={setSelectedIndex}
-                                closeCommandBar={closeCommandBar}
-                            />
-                        )}
-                    </Command.List>
-                </div>
+                {/* Conditionally render different screens based on state */}
+                {isPageActionMenu && selectedPage ? (
+                    // Render PageActionMenu as a completely separate screen
+                    <div className="lexia-command-container">
+                        <PageActionMenu
+                            page={selectedPage}
+                            closeCommandBar={closeCommandBar}
+                            onBack={() => {
+                                setIsPageActionMenu(false);
+                                setSelectedPage(null);
+                            }}
+                        />
+                    </div>
+                ) : (
+                    // Render the regular command bar content
+                    <div className="lexia-command-container">
+                        <Command.Input 
+                            value={searchTerm}
+                            onValueChange={handleSearchTermChange}
+                            placeholder={isPluginSearch ? __('Search for plugins...', 'lexia-command') : 
+                                      isPageSearch ? __('Search for pages...', 'lexia-command') :
+                                      __('Type a command or search...', 'lexia-command')}
+                            className="lexia-command-search"
+                            autoComplete="off"
+                            autoFocus
+                        />
+                        
+                        <Command.List className="lexia-command-results">
+                            {loading && !loadingMore && !installingPlugin && !activatingPlugin ? (
+                                <Command.Empty className="lexia-command-loading">
+                                    {__('Searching...', 'lexia-command')}
+                                </Command.Empty>
+                            ) : isPluginSearch ? (
+                                <PluginSearchResults
+                                    pluginResults={pluginResults}
+                                    searchTerm={searchTerm}
+                                    selectedIndex={selectedIndex}
+                                    setSelectedIndex={setSelectedIndex}
+                                    installPlugin={installPlugin}
+                                    activatePlugin={activatePlugin}
+                                    installingPlugin={installingPlugin}
+                                    activatingPlugin={activatingPlugin}
+                                    loadingMore={loadingMore}
+                                    hasMorePages={currentPage < totalPages}
+                                />
+                            ) : isPageSearch ? (
+                                <PageSearchResults
+                                    pageResults={pageResults}
+                                    searchTerm={searchTerm}
+                                    selectedIndex={selectedIndex}
+                                    setSelectedIndex={setSelectedIndex}
+                                    loadingMore={loadingMore}
+                                    hasMorePages={currentPage < totalPages}
+                                    closeCommandBar={closeCommandBar}
+                                />
+                            ) : results.length > 0 ? (
+                                <SearchResults 
+                                    results={results}
+                                    selectedIndex={selectedIndex}
+                                    setSelectedIndex={setSelectedIndex}
+                                    closeCommandBar={closeCommandBar}
+                                />
+                            ) : searchTerm ? (
+                                <Command.Empty className="lexia-command-no-results">
+                                    {__('No results found', 'lexia-command')}
+                                </Command.Empty>
+                            ) : (
+                                <SearchResults 
+                                    results={getAvailableCommands()}
+                                    selectedIndex={selectedIndex}
+                                    setSelectedIndex={setSelectedIndex}
+                                    closeCommandBar={closeCommandBar}
+                                />
+                            )}
+                        </Command.List>
+                    </div>
+                )}
             </Command>
         </div>
     );
 }
-
 export default CommandBar;
