@@ -9,6 +9,7 @@ import { searchCommands, commands } from '../commands';
 import { COMMAND_CATEGORIES } from '../commands/types';
 import PluginSearchResults from './PluginSearchResults';
 import PageSearchResults from './PageSearchResults';
+import PostSearchResults from './PostSearchResults';
 import PageActionMenu from './PageActionMenu';
 import SearchResults from './SearchResults';
 import '../css/command-bar.css';
@@ -18,9 +19,11 @@ function CommandBar() {
     const [results, setResults] = useState([]);
     const [isPluginSearch, setIsPluginSearch] = useState(false);
     const [isPageSearch, setIsPageSearch] = useState(false);
+    const [isPostSearch, setIsPostSearch] = useState(false);
     const [isPageActionMenu, setIsPageActionMenu] = useState(false);
     const [pluginResults, setPluginResults] = useState([]);
     const [pageResults, setPageResults] = useState([]);
+    const [postResults, setPostResults] = useState([]);
     const [selectedPage, setSelectedPage] = useState(null);
     
     // Use the search manager hook for common search functionality
@@ -42,6 +45,7 @@ function CommandBar() {
         handleSearchTermChange,
         searchPlugins,
         searchPages,
+        searchPosts,
         searchCommandsAndContent,
         loadMore,
         setupScrollHandler
@@ -76,16 +80,17 @@ function CommandBar() {
 
     // Load initial commands when command bar opens
     useEffect(() => {
-        if (isOpen && !isPluginSearch && !isPageSearch && !searchTerm) {
+        if (isOpen && !isPluginSearch && !isPageSearch && !isPostSearch && !searchTerm) {
             setResults(getAvailableCommands());
         }
-    }, [isOpen, isPluginSearch, isPageSearch, searchTerm, getAvailableCommands]);
+    }, [isOpen, isPluginSearch, isPageSearch, isPostSearch, searchTerm, getAvailableCommands]);
 
     // Fetch plugin statuses when plugin search is initiated
     useEffect(() => {
         const handlePluginSearch = () => {
             setIsPluginSearch(true);
             setIsPageSearch(false);
+            setIsPostSearch(false);
             resetSearch();
             setResults([]);
             setPluginResults([]);
@@ -101,6 +106,7 @@ function CommandBar() {
         const handlePageSearch = async () => {
             setIsPageSearch(true);
             setIsPluginSearch(false);
+            setIsPostSearch(false);
             setIsPageActionMenu(false);
             setSelectedPage(null);
             resetSearch();
@@ -121,6 +127,31 @@ function CommandBar() {
         window.addEventListener('lexiaCommand:showPageSearch', handlePageSearch);
         return () => window.removeEventListener('lexiaCommand:showPageSearch', handlePageSearch);
     }, [resetSearch, searchPages, setLoading]);
+    
+    // Handle post search
+    useEffect(() => {
+        const handlePostSearch = async () => {
+            setIsPostSearch(true);
+            setIsPageSearch(false);
+            setIsPluginSearch(false);
+            resetSearch();
+            setResults([]);
+            
+            // Immediately fetch all posts when post search is opened
+            setLoading(true);
+            try {
+                const posts = await searchPosts('');
+                setPostResults(posts);
+            } catch (error) {
+                console.error('Failed to fetch posts:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        window.addEventListener('lexiaCommand:showPostSearch', handlePostSearch);
+        return () => window.removeEventListener('lexiaCommand:showPostSearch', handlePostSearch);
+    }, [resetSearch, searchPosts, setLoading]);
     
     // Handle page action menu
     useEffect(() => {
@@ -147,7 +178,7 @@ function CommandBar() {
         }
         
         if (!searchTerm) {
-            if (!isPluginSearch && !isPageSearch) {
+            if (!isPluginSearch && !isPageSearch && !isPostSearch) {
                 // Show all available commands when no search term
                 setResults(getAvailableCommands());
             } else if (isPluginSearch) {
@@ -162,6 +193,16 @@ function CommandBar() {
                     console.error('Failed to fetch pages:', error);
                     setLoading(false);
                 });
+            } else if (isPostSearch) {
+                // When search term is cleared in post search, fetch all posts
+                setLoading(true);
+                searchPosts('').then(posts => {
+                    setPostResults(posts);
+                    setLoading(false);
+                }).catch(error => {
+                    console.error('Failed to fetch posts:', error);
+                    setLoading(false);
+                });
             }
             setSelectedIndex(0);
             return;
@@ -173,8 +214,8 @@ function CommandBar() {
             return; // Let the effect run again with page 1
         }
 
-        // For command search (not plugin or page search), execute immediately
-        if (!isPluginSearch && !isPageSearch) {
+        // For command search (not plugin, page, or post search), execute immediately
+        if (!isPluginSearch && !isPageSearch && !isPostSearch) {
             setLoading(true);
             (async () => {
                 try {
@@ -207,6 +248,10 @@ function CommandBar() {
                     // Search for pages
                     const pages = await searchPages(searchTerm);
                     setPageResults(pages);
+                } else if (isPostSearch) {
+                    // Search for posts
+                    const posts = await searchPosts(searchTerm);
+                    setPostResults(posts);
                 }
             } catch (error) {
                 console.error('Search failed:', error);
@@ -216,8 +261,8 @@ function CommandBar() {
         }, 300);
 
         return () => clearTimeout(searchTimer);
-    }, [searchTerm, isPluginSearch, isPageSearch, pluginStatuses, currentPage, getAvailableCommands, 
-        searchPlugins, searchPages, searchCommandsAndContent, isLoadingMoreRef, setCurrentPage, 
+    }, [searchTerm, isPluginSearch, isPageSearch, isPostSearch, pluginStatuses, currentPage, getAvailableCommands, 
+        searchPlugins, searchPages, searchPosts, searchCommandsAndContent, isLoadingMoreRef, setCurrentPage, 
         setLoading, setSelectedIndex]);
 
     const openCommandBar = useCallback(() => {
@@ -233,6 +278,7 @@ function CommandBar() {
         setPageResults([]);
         setIsPluginSearch(false);
         setIsPageSearch(false);
+        setIsPostSearch(false);
         setIsPageActionMenu(false);
         setSelectedPage(null);
     }, [resetSearch]);
@@ -273,15 +319,35 @@ function CommandBar() {
         });
     };
     
+    // Function to load more post results
+    const loadMorePosts = async () => {
+        if (loadingMore || !isPostSearch) {
+            return;
+        }
+        
+        await loadMore(async (nextPage) => {
+            const posts = await searchPosts(searchTerm);
+            
+            // Check for duplicates before adding new results
+            const existingPostIds = new Set(postResults.map(p => p.id));
+            const uniqueNewPosts = posts.filter(post => !existingPostIds.has(post.id));
+            
+            // Update results without triggering the main search effect
+            setPostResults(prevResults => [...prevResults, ...uniqueNewPosts]);
+        });
+    };
+    
     // Handle scroll event to implement infinite scroll
     useEffect(() => {
         if (isPluginSearch) {
             return setupScrollHandler(isOpen, isPluginSearch, loadMorePlugins);
         } else if (isPageSearch) {
             return setupScrollHandler(isOpen, isPageSearch, loadMorePages);
+        } else if (isPostSearch) {
+            return setupScrollHandler(isOpen, isPostSearch, loadMorePosts);
         }
         return () => {};
-    }, [isOpen, isPluginSearch, isPageSearch, currentPage, totalPages, loadingMore, searchTerm, setupScrollHandler, loadMorePlugins, loadMorePages]);
+    }, [isOpen, isPluginSearch, isPageSearch, isPostSearch, currentPage, totalPages, loadingMore, searchTerm, setupScrollHandler, loadMorePlugins, loadMorePages, loadMorePosts]);
 
     // Register keyboard shortcut
     useKeyboardShortcut(
@@ -394,6 +460,16 @@ function CommandBar() {
                                     setSelectedIndex={setSelectedIndex}
                                     loadingMore={loadingMore}
                                     hasMorePages={currentPage < totalPages}
+                                    closeCommandBar={closeCommandBar}
+                                />
+                            ) : isPostSearch ? (
+                                <PostSearchResults
+                                    postResults={postResults}
+                                    searchTerm={searchTerm}
+                                    selectedIndex={selectedIndex}
+                                    setSelectedIndex={setSelectedIndex}
+                                    loadingMore={loadingMore}
+                                    hasMorePosts={currentPage < totalPages}
                                     closeCommandBar={closeCommandBar}
                                 />
                             ) : results.length > 0 ? (

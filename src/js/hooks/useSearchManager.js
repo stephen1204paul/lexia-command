@@ -187,6 +187,31 @@ export function useSearchManager(options = {}) {
         };
     }, []);
     
+    /**
+     * Search WordPress posts
+     * @param {string} term - Search term
+     * @returns {Promise<Array>} Posts
+     */
+    const searchPosts = useCallback(async (term) => {
+        const queryString = new URLSearchParams({ 
+            search: term,
+            post_type: 'post',
+            per_page: 20
+        }).toString();
+        
+        const response = await apiFetch({
+            path: `/wp/v2/posts?${queryString}`,
+            method: 'GET'
+        });
+        
+        return response.map(post => ({
+            id: post.id,
+            title: post.title.rendered || __('(No title)', 'lexia-command'),
+            url: post.link,
+            status: post.status
+        }));
+    }, []);
+
     return {
         // State
         searchTerm,
@@ -210,6 +235,7 @@ export function useSearchManager(options = {}) {
         handleSearchTermChange,
         searchPlugins,
         searchPages,
+        searchPosts,
         searchCommandsAndContent,
         loadMore,
         setupScrollHandler
