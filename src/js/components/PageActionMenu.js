@@ -54,18 +54,6 @@ function PageActionMenu({ page, closeCommandBar, onBack }) {
         }
     ];
     
-    // Handle keyboard navigation
-    useEffect(() => {
-        const handleKeyDown = (e) => {
-            if (e.key === 'Escape') {
-                onBack();
-            }
-        };
-        
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [onBack]);
-    
     // Filter actions based on search term
     const filteredActions = useMemo(() => {
         if (!searchTerm) return actions;
@@ -75,6 +63,34 @@ function PageActionMenu({ page, closeCommandBar, onBack }) {
             action.id.toLowerCase().includes(searchTerm.toLowerCase())
         );
     }, [searchTerm, actions]);
+    
+    // Handle keyboard navigation
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (e.key === 'Escape') {
+                onBack();
+            } else if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                setSelectedIndex(prevIndex => {
+                    const nextIndex = prevIndex + 1;
+                    return nextIndex >= filteredActions.length ? 0 : nextIndex;
+                });
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                setSelectedIndex(prevIndex => {
+                    const nextIndex = prevIndex - 1;
+                    return nextIndex < 0 ? filteredActions.length - 1 : nextIndex;
+                });
+            } else if (e.key === 'Enter') {
+                if (filteredActions.length > 0 && selectedIndex >= 0 && selectedIndex < filteredActions.length) {
+                    filteredActions[selectedIndex].action();
+                }
+            }
+        };
+        
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [onBack, filteredActions, selectedIndex]);
     
     // Reset selected index when filtered actions change
     useEffect(() => {

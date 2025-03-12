@@ -452,6 +452,18 @@ function CommandBar() {
                             }}
                         />
                     </div>
+                ) : isPostActionMenu && selectedPage ? (
+                    // Render PostActionMenu as a completely separate screen
+                    <div className="lexia-command-container">
+                        <PostActionMenu
+                            post={selectedPage}
+                            closeCommandBar={closeCommandBar}
+                            onBack={() => {
+                                setIsPostActionMenu(false);
+                                setSelectedPage(null);
+                            }}
+                        />
+                    </div>
                 ) : (
                     // Render the regular command bar content
                     <div className="lexia-command-container">
