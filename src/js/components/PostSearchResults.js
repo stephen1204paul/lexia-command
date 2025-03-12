@@ -18,8 +18,8 @@ function PostSearchResults({
             <Command.Group>
                 {postResults.map((post, index) => (
                     <Command.Item
-                        key={`search-post-`+post.id}
-                        value={`search-post-`+post.id}
+                        key={`search-post-result-`+post.id}
+                        value={`search-post-result-`+post.id}
                         className="lexia-command-result"
                         onMouseEnter={() => setSelectedIndex(index)}
                         onSelect={() => {
@@ -29,7 +29,7 @@ function PostSearchResults({
                         }}
                         data-selected={index === selectedIndex}
                     >
-                        <div className="lexia-command-page-result-name w-20">
+                        <div className="lexia-command-post-result-name w-20">
                             <span className="lexia-command-result-title">{post.title}</span>
                         </div>
                         <div className="lexia-command-result-details w-65">

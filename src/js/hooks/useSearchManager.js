@@ -199,17 +199,33 @@ export function useSearchManager(options = {}) {
             per_page: 20
         }).toString();
         
-        const response = await apiFetch({
-            path: `/wp/v2/posts?${queryString}`,
-            method: 'GET'
-        });
-        
-        return response.map(post => ({
-            id: post.id,
-            title: post.title.rendered || __('(No title)', 'lexia-command'),
-            url: post.link,
-            status: post.status
-        }));
+        try {
+            // Make the API request
+            const response = await apiFetch({
+                path: `/wp/v2/posts?${queryString}`,
+                method: 'GET',
+                parse: false
+            });
+            
+            // Get total pages from headers
+            const totalPosts = parseInt(response.headers.get('X-WP-Total') || 0);
+            const totalPages = parseInt(response.headers.get('X-WP-TotalPages') || 0);
+            setTotalPages(totalPages);
+            
+            // Parse the JSON response
+            const posts = await response.json();
+            
+            // Map the posts to a simpler format
+            return posts.map(post => ({
+                id: post.id,
+                title: post.title.rendered || __('(No title)', 'lexia-command'),
+                url: post.link,
+                status: post.status
+            }));
+        } catch (error) {
+            console.error('Error fetching posts:', error);
+            return [];
+        }
     }, []);
 
     return {

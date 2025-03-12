@@ -11,6 +11,7 @@ import PluginSearchResults from './PluginSearchResults';
 import PageSearchResults from './PageSearchResults';
 import PostSearchResults from './PostSearchResults';
 import PageActionMenu from './PageActionMenu';
+import PostActionMenu from './PostActionMenu';
 import SearchResults from './SearchResults';
 import '../css/command-bar.css';
 
@@ -21,6 +22,7 @@ function CommandBar() {
     const [isPageSearch, setIsPageSearch] = useState(false);
     const [isPostSearch, setIsPostSearch] = useState(false);
     const [isPageActionMenu, setIsPageActionMenu] = useState(false);
+    const [isPostActionMenu, setIsPostActionMenu] = useState(false);
     const [pluginResults, setPluginResults] = useState([]);
     const [pageResults, setPageResults] = useState([]);
     const [postResults, setPostResults] = useState([]);
@@ -108,6 +110,7 @@ function CommandBar() {
             setIsPluginSearch(false);
             setIsPostSearch(false);
             setIsPageActionMenu(false);
+            setIsPostActionMenu(false);
             setSelectedPage(null);
             resetSearch();
             setResults([]);
@@ -141,6 +144,7 @@ function CommandBar() {
             setLoading(true);
             try {
                 const posts = await searchPosts('');
+                console.log('Post search results:', posts); // Add debug log
                 setPostResults(posts);
             } catch (error) {
                 console.error('Failed to fetch posts:', error);
@@ -168,6 +172,23 @@ function CommandBar() {
 
         window.addEventListener('lexiaCommand:showPageActionMenu', handlePageActionMenu);
         return () => window.removeEventListener('lexiaCommand:showPageActionMenu', handlePageActionMenu);
+    }, []);
+
+    // Handle post action menu
+    useEffect(() => {
+        const handlePostActionMenu = (event) => {
+            const { post } = event.detail;
+            // First set the selected page
+            setSelectedPage(post);
+            // Then update the UI state to show the action menu
+            // This ensures the page data is available when the menu renders
+            setTimeout(() => {
+                setIsPostActionMenu(true);
+            }, 0);
+        };
+
+        window.addEventListener('lexiaCommand:showPostActionMenu', handlePostActionMenu);
+        return () => window.removeEventListener('lexiaCommand:showPostActionMenu', handlePostActionMenu);
     }, []);
 
     // Search handler
@@ -251,6 +272,7 @@ function CommandBar() {
                 } else if (isPostSearch) {
                     // Search for posts
                     const posts = await searchPosts(searchTerm);
+                    console.log('Search posts with term:', searchTerm, posts);
                     setPostResults(posts);
                 }
             } catch (error) {
@@ -280,6 +302,7 @@ function CommandBar() {
         setIsPageSearch(false);
         setIsPostSearch(false);
         setIsPageActionMenu(false);
+        setIsPostActionMenu(false);
         setSelectedPage(null);
     }, [resetSearch]);
     
@@ -371,9 +394,16 @@ function CommandBar() {
                 event.preventDefault();
                 setIsPageActionMenu(false);
                 setSelectedPage(null);
+            } else if (isPostSearch && !isPostActionMenu) {
+                event.preventDefault();
+                setIsPostSearch(false);
+            } else if (isPostActionMenu) {
+                event.preventDefault();
+                setIsPostActionMenu(false);
+                setSelectedPost(null);
             }
         }
-    }, [isOpen, isPluginSearch, isPageSearch, isPageActionMenu, searchTerm]);
+    }, [isOpen, isPluginSearch, isPageSearch, isPageActionMenu, isPostActionMenu, searchTerm]);
 
     // Add keyboard shortcut for Backspace/Delete to return to main search from plugin search
     useKeyboardShortcut({ key: 'Backspace' }, handleNavigationKeyShortcut);
@@ -393,6 +423,8 @@ function CommandBar() {
                         {isPluginSearch ? __('Search WordPress Plugins', 'lexia-command') : 
                          isPageSearch && !isPageActionMenu ? __('Search Pages', 'lexia-command') :
                          isPageActionMenu ? __('Page Actions', 'lexia-command') :
+                         isPostSearch && !isPostActionMenu ? __('Search Posts', 'lexia-command') :
+                         isPostActionMenu ? __('Post Actions', 'lexia-command') :
                          __('LexiaCommand', 'lexia-command')}
                     </div>
                     <button 
