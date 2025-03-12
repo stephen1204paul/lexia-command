@@ -2,19 +2,19 @@ import { __ } from '@wordpress/i18n';
 import { Command } from 'cmdk';
 import { useState, useEffect, useMemo } from '@wordpress/element';
 
-function PostActionMenu({ page, closeCommandBar, onBack }) {
+function PostActionMenu({ post, closeCommandBar, onBack }) {
     const [selectedIndex, setSelectedIndex] = useState(0);
     const [hoverIndex, setHoverIndex] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     
-    // Define the available actions for the page
+    // Define the available actions for the post
     const actions = [
         {
             id: 'view',
-            title: page.status === 'publish' ? __('View Post', 'lexia-command') : __('Preview Post', 'lexia-command'),
+            title: post.status === 'publish' ? __('View Post', 'lexia-command') : __('Preview Post', 'lexia-command'),
             icon: '👁️',
             action: () => {
-                window.location.href = page.url;
+                window.location.href = post.url;
                 closeCommandBar();
             }
         },
@@ -23,7 +23,7 @@ function PostActionMenu({ page, closeCommandBar, onBack }) {
             title: __('Edit Post', 'lexia-command'),
             icon: '✏️',
             action: () => {
-                window.location.href = `${window.lexiaCommandData.adminUrl}post.php?post=${page.id}&action=edit`;
+                window.location.href = `${window.lexiaCommandData.adminUrl}post.php?post=${post.id}&action=edit`;
                 closeCommandBar();
             }
         },
@@ -32,10 +32,10 @@ function PostActionMenu({ page, closeCommandBar, onBack }) {
             title: __('Move to Trash', 'lexia-command'),
             icon: '🗑️',
             action: () => {
-                // Send request to trash the page
+                // Send request to trash the post
                 const formData = new FormData();
                 formData.append('action', 'trash');
-                formData.append('post', page.id);
+                formData.append('post', post.id);
                 formData.append('_wpnonce', window.lexiaCommandData.nonce);
                 
                 fetch(`${window.lexiaCommandData.adminUrl}post.php`, {
@@ -45,26 +45,14 @@ function PostActionMenu({ page, closeCommandBar, onBack }) {
                 }).then(() => {
                     // Show success message or redirect
                     closeCommandBar();
-                    // Optionally refresh the page list
+                    // Optionally refresh the post list
                     window.location.reload();
                 }).catch(error => {
-                    console.error('Error trashing page:', error);
+                    console.error('Error trashing post:', error);
                 });
             }
         }
     ];
-    
-    // Handle keyboard navigation
-    useEffect(() => {
-        const handleKeyDown = (e) => {
-            if (e.key === 'Escape') {
-                onBack();
-            }
-        };
-        
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [onBack]);
     
     // Filter actions based on search term
     const filteredActions = useMemo(() => {
@@ -75,6 +63,34 @@ function PostActionMenu({ page, closeCommandBar, onBack }) {
             action.id.toLowerCase().includes(searchTerm.toLowerCase())
         );
     }, [searchTerm, actions]);
+    
+    // Handle keyboard navigation
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (e.key === 'Escape') {
+                onBack();
+            } else if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                setSelectedIndex(prevIndex => {
+                    const nextIndex = prevIndex + 1;
+                    return nextIndex >= filteredActions.length ? 0 : nextIndex;
+                });
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                setSelectedIndex(prevIndex => {
+                    const nextIndex = prevIndex - 1;
+                    return nextIndex < 0 ? filteredActions.length - 1 : nextIndex;
+                });
+            } else if (e.key === 'Enter') {
+                if (filteredActions.length > 0 && selectedIndex >= 0 && selectedIndex < filteredActions.length) {
+                    filteredActions[selectedIndex].action();
+                }
+            }
+        };
+        
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [onBack, filteredActions, selectedIndex]);
     
     // Reset selected index when filtered actions change
     useEffect(() => {
@@ -180,8 +196,8 @@ function PostActionMenu({ page, closeCommandBar, onBack }) {
     };
 
     return (
-        <div className="lexia-command-page-actions-wrapper">
-            <div style={styles.header} className="lexia-command-page-actions-header">
+        <div className="lexia-command-post-actions-wrapper">
+            <div style={styles.header} className="lexia-command-post-actions-header">
                 <button 
                     style={{
                         ...styles.backButton,
@@ -195,7 +211,7 @@ function PostActionMenu({ page, closeCommandBar, onBack }) {
                 >
                     <span style={{ marginRight: '6px' }}>←</span> {__('Back', 'lexia-command')}
                 </button>
-                <h3 style={styles.pageTitle} className="lexia-command-page-title">{page.title}</h3>
+                <h3 style={styles.pageTitle} className="lexia-command-post-title">{post.title}</h3>
             </div>
             
             <div className="lexia-command-search-wrapper">
@@ -210,7 +226,7 @@ function PostActionMenu({ page, closeCommandBar, onBack }) {
                 />
             </div>
             
-            <Command.List style={styles.container} className="lexia-command-page-actions">
+            <Command.List style={styles.container} className="lexia-command-post-actions">
                 <div style={styles.actionGroup}>
                     <Command.Group>
                         {filteredActions.length === 0 ? (

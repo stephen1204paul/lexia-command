@@ -1,6 +1,7 @@
 import { __ } from '@wordpress/i18n';
 import { Command } from 'cmdk';
 import { useState } from '@wordpress/element';
+import PostActionMenu from './PostActionMenu';
 
 function PostSearchResults({ 
     postResults, 
@@ -23,9 +24,9 @@ function PostSearchResults({
                         className="lexia-command-result"
                         onMouseEnter={() => setSelectedIndex(index)}
                         onSelect={() => {
-                            // Navigate to the post when selected
-                            window.location.href = post.url;
-                            closeCommandBar();
+                            // Dispatch an event to show the post action menu
+                            const event = new CustomEvent('lexiaCommand:showPostActionMenu', { detail: { post } });
+                            window.dispatchEvent(event);
                         }}
                         data-selected={index === selectedIndex}
                     >
@@ -37,7 +38,7 @@ function PostSearchResults({
                         </div>
                         <div className="lexia-command-result-meta w-15">
                             <span className="lexia-command-shortcut">
-                                {__('Enter to view', 'lexia-command')}
+                                {__('Enter for options', 'lexia-command')}
                             </span>
                         </div>
                     </Command.Item>
