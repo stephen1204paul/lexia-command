@@ -100,6 +100,14 @@ export function useSearchManager(options = {}) {
      */
     const searchCommandsAndContent = useCallback(async (term, searchCommandsFn) => {
         const commandResults = searchCommandsFn(term);
+
+        
+        // Only return command results for command search
+        if (window.lexiaCommandData.searchContext === 'commands') {
+            return commandResults;
+        }
+        
+        // For other contexts, include content results from the API
         const queryString = new URLSearchParams({ query: term }).toString();
         const response = await apiFetch({
             path: `/${window.lexiaCommandData.restNamespace}/search?${queryString}`,

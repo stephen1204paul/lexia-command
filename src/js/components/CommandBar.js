@@ -13,6 +13,7 @@ import PostSearchResults from './PostSearchResults';
 import PageActionMenu from './PageActionMenu';
 import PostActionMenu from './PostActionMenu';
 import SearchResults from './SearchResults';
+import NoCommandSuggestion from './NoCommandSuggestion';
 import '../css/command-bar.css';
 
 function CommandBar() {
@@ -105,7 +106,7 @@ function CommandBar() {
     
     // Handle page search
     useEffect(() => {
-        const handlePageSearch = async () => {
+        const handlePageSearch = async (event) => {
             setIsPageSearch(true);
             setIsPluginSearch(false);
             setIsPostSearch(false);
@@ -115,10 +116,16 @@ function CommandBar() {
             resetSearch();
             setResults([]);
             
-            // Immediately fetch all pages when page search is opened
+            // Get search term from event if available
+            const initialSearchTerm = event?.detail?.searchTerm || '';
+            if (initialSearchTerm) {
+                setSearchTerm(initialSearchTerm);
+            }
+            
+            // Fetch pages with the search term if provided
             setLoading(true);
             try {
-                const pages = await searchPages('');
+                const pages = await searchPages(initialSearchTerm);
                 setPageResults(pages);
             } catch (error) {
                 console.error('Failed to fetch pages:', error);
@@ -129,22 +136,28 @@ function CommandBar() {
 
         window.addEventListener('lexiaCommand:showPageSearch', handlePageSearch);
         return () => window.removeEventListener('lexiaCommand:showPageSearch', handlePageSearch);
-    }, [resetSearch, searchPages, setLoading]);
+    }, [resetSearch, searchPages, setLoading, setSearchTerm]);
     
     // Handle post search
     useEffect(() => {
-        const handlePostSearch = async () => {
+        const handlePostSearch = async (event) => {
             setIsPostSearch(true);
             setIsPageSearch(false);
             setIsPluginSearch(false);
             resetSearch();
             setResults([]);
             
-            // Immediately fetch all posts when post search is opened
+            // Get search term from event if available
+            const initialSearchTerm = event?.detail?.searchTerm || '';
+            if (initialSearchTerm) {
+                setSearchTerm(initialSearchTerm);
+            }
+            
+            // Fetch posts with the search term if provided
             setLoading(true);
             try {
-                const posts = await searchPosts('');
-                console.log('Post search results:', posts); // Add debug log
+                const posts = await searchPosts(initialSearchTerm);
+                console.log('Post search results:', posts);
                 setPostResults(posts);
             } catch (error) {
                 console.error('Failed to fetch posts:', error);
@@ -240,6 +253,9 @@ function CommandBar() {
             setLoading(true);
             (async () => {
                 try {
+                    // Set search context to 'commands' for command search
+                    window.lexiaCommandData.searchContext = 'commands';
+                    
                     // First set immediate results from local command search
                     const commandResults = searchCommands(searchTerm) || [];
                     setResults(commandResults);
@@ -524,9 +540,7 @@ function CommandBar() {
                                     closeCommandBar={closeCommandBar}
                                 />
                             ) : searchTerm ? (
-                                <Command.Empty className="lexia-command-no-results">
-                                    {__('No results found', 'lexia-command')}
-                                </Command.Empty>
+                                <NoCommandSuggestion searchTerm={searchTerm} />
                             ) : (
                                 <SearchResults 
                                     results={getAvailableCommands()}

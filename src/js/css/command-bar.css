@@ -277,3 +277,43 @@
 [cmdk-item]:not([data-selected="true"]):hover {
     background-color: rgba(255, 255, 255, 0.05);
 }
+
+
+/* Styles for No Command Found suggestion UI */
+.lexia-command-no-command-found {
+    padding: 16px;
+    text-align: center;
+}
+
+.lexia-command-no-command-found p {
+    margin: 8px 0;
+    color: #fff;
+}
+
+.lexia-command-suggestion-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 16px;
+}
+
+.lexia-command-suggestion-button {
+    display: flex;
+    align-items: center;
+    padding: 8px 16px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.lexia-command-suggestion-button:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.lexia-command-suggestion-icon {
+    margin-right: 8px;
+    font-size: 16px;
+}
