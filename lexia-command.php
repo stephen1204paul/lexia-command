@@ -61,8 +61,11 @@ require plugin_dir_path(__FILE__) . 'includes/class-lexia-command.php';
  * @since    1.0.0
  */
 function run_lexia_command() {
-    $plugin = new Lexia_Command();
-    $plugin->run();
+    // Only load the plugin when user is logged in
+    if (is_user_logged_in()) {
+        $plugin = new Lexia_Command();
+        $plugin->run();
+    }
 }
 
 run_lexia_command();
