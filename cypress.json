@@ -1,0 +1,12 @@
+{
+  "baseUrl": "http://localhost:8000",
+  "integrationFolder": "tests/cypress/integration",
+  "supportFile": "tests/cypress/support/index.js",
+  "pluginsFile": "tests/cypress/plugins/index.js",
+  "fixturesFolder": "tests/cypress/fixtures",
+  "screenshotsFolder": "tests/cypress/screenshots",
+  "videosFolder": "tests/cypress/videos",
+  "defaultCommandTimeout": 10000,
+  "viewportWidth": 1280,
+  "viewportHeight": 800
+}
