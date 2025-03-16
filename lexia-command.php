@@ -68,7 +68,8 @@ function run_lexia_command() {
     }
 }
 
-run_lexia_command();
+// Hook into WordPress init to ensure WordPress is fully loaded before checking if user is logged in
+add_action('init', 'run_lexia_command');
 
 function plugin_feedback_admin_notice() {
     // Get the current user ID
