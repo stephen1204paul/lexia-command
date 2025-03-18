@@ -42,8 +42,16 @@ export const useFocusTrap = (container, onEscape) => {
   const firstElement = focusableElements[0];
   const lastElement = focusableElements[focusableElements.length - 1];
   
-  // Set initial focus
-  firstElement.focus();
+  // Set initial focus - prioritize search input if it exists
+  const searchInput = container.querySelector('.lexia-command-search, [cmdk-input]');
+  if (searchInput) {
+    // Use setTimeout to ensure the focus happens after the component is fully rendered
+    setTimeout(() => {
+      searchInput.focus();
+    }, 50);
+  } else {
+    firstElement.focus();
+  }
   
   const handleKeyDown = (e) => {
     // Handle Escape key

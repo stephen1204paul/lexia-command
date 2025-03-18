@@ -12,13 +12,23 @@ import { announceToScreenReader, useFocusTrap, toggleHighContrast, isHighContras
  */
 export const manageFocus = (isOpen, modalRef, previouslyFocusedElement) => {
   if (isOpen && modalRef.current) {
-    // When opening, focus the first focusable element in the modal
-    const focusableElements = modalRef.current.querySelectorAll(
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-    );
+    // When opening, prioritize focusing the search input
+    const searchInput = modalRef.current.querySelector('.lexia-command-search, [cmdk-input]');
     
-    if (focusableElements.length > 0) {
-      focusableElements[0].focus();
+    if (searchInput) {
+      // Use setTimeout to ensure the focus happens after the component is fully rendered
+      setTimeout(() => {
+        searchInput.focus();
+      }, 50);
+    } else {
+      // Fall back to focusing the first focusable element if search input doesn't exist
+      const focusableElements = modalRef.current.querySelectorAll(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      
+      if (focusableElements.length > 0) {
+        focusableElements[0].focus();
+      }
     }
   } else if (previouslyFocusedElement) {
     // When closing, return focus to the element that had focus before opening
