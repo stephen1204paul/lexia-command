@@ -248,6 +248,10 @@ class Lexia_Command {
 		}
 
 		$slug = sanitize_text_field($request->get_param('slug'));
+
+		if ( ! function_exists( 'get_plugins' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/plugin.php';
+		}
 		$plugins = get_plugins();
 		$plugin_file = false;
 

@@ -12,6 +12,8 @@ import PageSearchResults from './PageSearchResults';
 import PostSearchResults from './PostSearchResults';
 import PageActionMenu from './PageActionMenu';
 import PostActionMenu from './PostActionMenu';
+import PluginActionMenu from './PluginActionMenu';
+import InstalledPluginsResults from './InstalledPluginsResults';
 import SearchResults from './SearchResults';
 import NoCommandSuggestion from './NoCommandSuggestion';
 import { useFocusTrap, announceToScreenReader, isHighContrastEnabled, toggleHighContrast, addFocusStyles } from '../utils/accessibility';
@@ -24,14 +26,18 @@ function CommandBar() {
     const [isOpen, setIsOpen] = useState(false);
     const [results, setResults] = useState([]);
     const [isPluginSearch, setIsPluginSearch] = useState(false);
+    const [isInstalledPlugins, setIsInstalledPlugins] = useState(false);
     const [isPageSearch, setIsPageSearch] = useState(false);
     const [isPostSearch, setIsPostSearch] = useState(false);
     const [isPageActionMenu, setIsPageActionMenu] = useState(false);
     const [isPostActionMenu, setIsPostActionMenu] = useState(false);
+    const [isPluginActionMenu, setIsPluginActionMenu] = useState(false);
     const [pluginResults, setPluginResults] = useState([]);
+    const [installedPlugins, setInstalledPlugins] = useState([]);
     const [pageResults, setPageResults] = useState([]);
     const [postResults, setPostResults] = useState([]);
     const [selectedPage, setSelectedPage] = useState(null);
+    const [selectedPlugin, setSelectedPlugin] = useState(null);
     const [highContrast, setHighContrast] = useState(false);
     const [reducedMotion, setReducedMotion] = useState(false);
     const [largerFontSize, setLargerFontSize] = useState(false);
@@ -162,8 +168,10 @@ function CommandBar() {
     useEffect(() => {
         const handlePluginSearch = () => {
             setIsPluginSearch(true);
+            setIsInstalledPlugins(false);
             setIsPageSearch(false);
             setIsPostSearch(false);
+            setIsPluginActionMenu(false);
             resetSearch();
             setResults([]);
             setPluginResults([]);
@@ -176,6 +184,53 @@ function CommandBar() {
         window.addEventListener('lexiaCommand:showPluginSearch', handlePluginSearch);
         return () => window.removeEventListener('lexiaCommand:showPluginSearch', handlePluginSearch);
     }, [fetchPluginStatuses, resetSearch]);
+    
+    // Handle showing installed plugins
+    useEffect(() => {
+        const handleInstalledPlugins = async () => {
+            setIsInstalledPlugins(true);
+            setIsPluginSearch(false);
+            setIsPageSearch(false);
+            setIsPostSearch(false);
+            setIsPluginActionMenu(false);
+            resetSearch();
+            setResults([]);
+            
+            // Fetch installed plugins
+            setLoading(true);
+            try {
+                await fetchPluginStatuses();
+                
+                // Get the latest plugin statuses directly from the API
+                const response = await apiFetch({
+                    path: `/${window.lexiaCommandData.restNamespace}/get-plugin-statuses`,
+                    method: 'GET'
+                });
+                
+                const latestPluginStatuses = response.data || {};
+                
+                // Convert plugin statuses object to array of plugins
+                const pluginsArray = Object.entries(latestPluginStatuses).map(([slug, status]) => ({
+                    slug,
+                    name: slug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+                    active: status.active,
+                    plugin_path: status.plugin_path
+                }));
+                
+                setInstalledPlugins(pluginsArray);
+                
+                // Announce to screen readers
+                announceToScreenReader(__('Installed plugins view activated', 'lexia-command'));
+            } catch (error) {
+                console.error('Failed to fetch installed plugins:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        window.addEventListener('lexiaCommand:showInstalledPlugins', handleInstalledPlugins);
+        return () => window.removeEventListener('lexiaCommand:showInstalledPlugins', handleInstalledPlugins);
+    }, [fetchPluginStatuses, resetSearch, setLoading]);
     
     // Handle page search
     useEffect(() => {
@@ -286,6 +341,28 @@ function CommandBar() {
 
         window.addEventListener('lexiaCommand:showPostActionMenu', handlePostActionMenu);
         return () => window.removeEventListener('lexiaCommand:showPostActionMenu', handlePostActionMenu);
+    }, []);
+    
+    // Handle plugin action menu
+    useEffect(() => {
+        const handlePluginActionMenu = (plugin) => {
+            // First set the selected plugin
+            setSelectedPlugin(plugin);
+            // Then update the UI state to show the action menu
+            setTimeout(() => {
+                setIsPluginActionMenu(true);
+                
+                // Announce to screen readers
+                announceToScreenReader(__('Plugin action menu opened', 'lexia-command'));
+            }, 0);
+        };
+
+        // This is a function we'll pass to the InstalledPluginsResults component
+        window.lexiaCommandHandlePluginActionMenu = handlePluginActionMenu;
+        
+        return () => {
+            delete window.lexiaCommandHandlePluginActionMenu;
+        };
     }, []);
 
     // Search handler
@@ -434,7 +511,9 @@ function CommandBar() {
         setIsPostSearch(false);
         setIsPageActionMenu(false);
         setIsPostActionMenu(false);
+        setIsPluginActionMenu(false);
         setSelectedPage(null);
+        setSelectedPlugin(null);
     }, [resetSearch]);
     
     // Function to load more plugin results
@@ -518,6 +597,14 @@ function CommandBar() {
             if (isPluginSearch) {
                 event.preventDefault();
                 setIsPluginSearch(false);
+            } else if (isInstalledPlugins && !isPluginActionMenu) {
+                event.preventDefault();
+                setIsInstalledPlugins(false);
+            } else if (isPluginActionMenu) {
+                event.preventDefault();
+                setIsPluginActionMenu(false);
+                setIsInstalledPlugins(true);
+                setSelectedPlugin(null);
             } else if (isPageSearch && !isPageActionMenu) {
                 event.preventDefault();
                 setIsPageSearch(false);
@@ -534,7 +621,7 @@ function CommandBar() {
                 setSelectedPage(null);
             }
         }
-    }, [isOpen, isPluginSearch, isPageSearch, isPageActionMenu, isPostSearch, isPostActionMenu, searchTerm]);
+    }, [isOpen, isPluginSearch, isInstalledPlugins, isPluginActionMenu, isPageSearch, isPageActionMenu, isPostSearch, isPostActionMenu, searchTerm]);
 
     // Add keyboard shortcut for Backspace/Delete to return to main search from plugin search
     useKeyboardShortcut({ key: 'Backspace' }, handleNavigationKeyShortcut);
@@ -590,7 +677,21 @@ function CommandBar() {
                 </div>
                 
                 {/* Conditionally render different screens based on state */}
-                {isPageActionMenu && selectedPage ? (
+                {isPluginActionMenu && selectedPlugin ? (
+                    // Render PluginActionMenu as a completely separate screen
+                    <div className="lexia-command-container">
+                        <PluginActionMenu
+                            plugin={selectedPlugin}
+                            closeCommandBar={closeCommandBar}
+                            onBack={() => {
+                                setIsPluginActionMenu(false);
+                                setSelectedPlugin(null);
+                                setIsInstalledPlugins(true);
+                                announceToScreenReader(__('Installed plugins view activated', 'lexia-command'));
+                            }}
+                        />
+                    </div>
+                ) : isPageActionMenu && selectedPage ? (
                     // Render PageActionMenu as a completely separate screen
                     <div className="lexia-command-container">
                         <PageActionMenu
@@ -623,6 +724,7 @@ function CommandBar() {
                                 value={searchTerm}
                                 onValueChange={handleSearchTermChange}
                                 placeholder={isPluginSearch ? __('Search for plugins...', 'lexia-command') : 
+                                          isInstalledPlugins ? __('Search installed plugins...', 'lexia-command') :
                                           isPageSearch ? __('Search for pages...', 'lexia-command') :
                                           __('Type a command or search...', 'lexia-command')}
                                 className="lexia-command-search"
@@ -647,6 +749,14 @@ function CommandBar() {
                                         activatingPlugin={activatingPlugin}
                                         loadingMore={loadingMore}
                                         hasMorePages={currentPage < totalPages}
+                                    />
+                                ) : isInstalledPlugins ? (
+                                    <InstalledPluginsResults
+                                        installedPlugins={installedPlugins}
+                                        selectedIndex={selectedIndex}
+                                        setSelectedIndex={setSelectedIndex}
+                                        closeCommandBar={closeCommandBar}
+                                        onSelectPlugin={window.lexiaCommandHandlePluginActionMenu}
                                     />
                                 ) : isPageSearch ? (
                                     <PageSearchResults

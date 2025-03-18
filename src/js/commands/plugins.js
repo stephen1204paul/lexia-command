@@ -7,10 +7,13 @@ export const pluginCommands = [
         type: COMMAND_TYPES.MANAGE,
         category: COMMAND_CATEGORIES.PLUGINS,
         title: __('Manage Plugins', 'lexia-command'),
-        keywords: ['plugins', 'add plugin', 'install plugin'],
+        keywords: ['plugins', 'add plugin', 'install plugin', 'manage', 'manage plugins'],
         icon: '🔌',
-        action: () => {
-            window.location.href = `${window.lexiaCommandData.adminUrl}plugins.php`;
+        action: (closeCommandBar) => {
+            const event = new CustomEvent('lexiaCommand:showInstalledPlugins');
+            window.dispatchEvent(event);
+            // Prevent closing the command bar for plugin management
+            return false;
         },
     },
     {
