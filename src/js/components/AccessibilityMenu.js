@@ -1,5 +1,12 @@
 import { __ } from '@wordpress/i18n';
 import { useState, useEffect } from '@wordpress/element';
+import { 
+    isDarkModeEnabled, 
+    toggleDarkMode as toggleDarkModeUtil,
+    getThemePreference,
+    setThemePreference 
+} from '../utils/theme';
+import { announceToScreenReader } from '../utils/accessibility';
 
 /**
  * AccessibilityMenu component provides accessibility options for the command bar
@@ -11,6 +18,9 @@ import { useState, useEffect } from '@wordpress/element';
  * @param {Function} props.setReducedMotion Function to set reduced motion mode
  * @param {boolean} props.largerFontSize Whether larger font size mode is enabled
  * @param {Function} props.setLargerFontSize Function to set larger font size mode
+ * @param {boolean} props.darkMode Whether dark mode is enabled
+ * @param {Function} props.setDarkMode Function to set dark mode
+ * @param {boolean} props.showAdvanced Whether to show advanced options
  */
 function AccessibilityMenu({ 
     highContrast, 
@@ -18,9 +28,13 @@ function AccessibilityMenu({
     reducedMotion, 
     setReducedMotion, 
     largerFontSize, 
-    setLargerFontSize 
+    setLargerFontSize,
+    darkMode,
+    setDarkMode,
+    showAdvanced = false
 }) {
     const [isOpen, setIsOpen] = useState(false);
+    const [themePreference, setThemePref] = useState(getThemePreference());
 
     // Close menu when clicking outside
     useEffect(() => {
@@ -37,19 +51,80 @@ function AccessibilityMenu({
         };
     }, [isOpen]);
 
+    // Update theme preference when it changes
+    useEffect(() => {
+        setThemePref(getThemePreference());
+    }, [darkMode]);
+
+    // Setup keyboard shortcuts
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (e.altKey) {
+                switch(e.key.toLowerCase()) {
+                    case 'd':
+                        e.preventDefault();
+                        handleDarkModeToggle();
+                        break;
+                    case 'h':
+                        e.preventDefault();
+                        handleHighContrastToggle();
+                        break;
+                    case 'm':
+                        e.preventDefault();
+                        handleReducedMotionToggle();
+                        break;
+                    case 'f':
+                        e.preventDefault();
+                        handleLargerFontSizeToggle();
+                        break;
+                }
+            }
+        };
+
+        document.addEventListener('keydown', handleKeyDown);
+        return () => {
+            document.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [highContrast, reducedMotion, largerFontSize, darkMode]);
+
+    // Toggle dark mode
+    const handleDarkModeToggle = async () => {
+        console.log('🌙 AccessibilityMenu: Dark mode toggle clicked');
+        console.log('🌙 AccessibilityMenu: Current darkMode state:', darkMode);
+        
+        const newState = await toggleDarkModeUtil();
+        console.log('🌙 AccessibilityMenu: toggleDarkModeUtil returned:', newState);
+        
+        setDarkMode(newState);
+        console.log('🌙 AccessibilityMenu: Called setDarkMode with:', newState);
+        
+        announceToScreenReader(newState ? __('Dark mode enabled', 'lexia-command') : __('Dark mode disabled', 'lexia-command'));
+    };
+
     // Toggle high contrast mode
     const handleHighContrastToggle = () => {
         setHighContrast(!highContrast);
+        announceToScreenReader(!highContrast ? __('High contrast mode enabled', 'lexia-command') : __('High contrast mode disabled', 'lexia-command'));
     };
 
     // Toggle reduced motion mode
     const handleReducedMotionToggle = () => {
         setReducedMotion(!reducedMotion);
+        announceToScreenReader(!reducedMotion ? __('Reduced motion enabled', 'lexia-command') : __('Reduced motion disabled', 'lexia-command'));
     };
 
     // Toggle larger font size mode
     const handleLargerFontSizeToggle = () => {
         setLargerFontSize(!largerFontSize);
+        announceToScreenReader(!largerFontSize ? __('Larger font size enabled', 'lexia-command') : __('Larger font size disabled', 'lexia-command'));
+    };
+
+    // Handle theme preference change
+    const handleThemePreferenceChange = (e) => {
+        const newTheme = e.target.value;
+        setThemePref(newTheme);
+        setThemePreference(newTheme);
+        announceToScreenReader(__(`Theme preference set to ${newTheme}`, 'lexia-command'));
     };
 
     return (
@@ -68,8 +143,57 @@ function AccessibilityMenu({
             {isOpen && (
                 <div 
                     className="lexia-accessibility-options" 
-                    role="menu"
+                    role="group"
+                    aria-label={__('Accessibility settings', 'lexia-command')}
                 >
+                    <div 
+                        className="lexia-accessibility-option" 
+                        role="menuitem" 
+                        tabIndex="0"
+                        onClick={handleDarkModeToggle}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                handleDarkModeToggle();
+                            }
+                        }}
+                    >
+                        <div className="lexia-accessibility-option-label">
+                            <span>{__('Dark Mode', 'lexia-command')}</span>
+                        </div>
+                        <label className="lexia-accessibility-toggle" onClick={(e) => e.stopPropagation()}>
+                            <input 
+                                type="checkbox"
+                                checked={darkMode}
+                                onChange={(e) => {
+                                    e.stopPropagation();
+                                    handleDarkModeToggle();
+                                }}
+                                aria-label={__('Dark Mode', 'lexia-command')}
+                            />
+                            <span className="lexia-accessibility-slider"></span>
+                        </label>
+                        <span className="lexia-accessibility-shortcut">Alt+D</span>
+                    </div>
+
+                    {showAdvanced && (
+                        <div className="lexia-accessibility-option lexia-theme-selector">
+                            <label htmlFor="theme-preference">
+                                <span>{__('Theme Preference', 'lexia-command')}</span>
+                            </label>
+                            <select 
+                                id="theme-preference"
+                                value={themePreference}
+                                onChange={handleThemePreferenceChange}
+                                aria-label={__('Theme Preference', 'lexia-command')}
+                            >
+                                <option value="light">{__('Light', 'lexia-command')}</option>
+                                <option value="dark">{__('Dark', 'lexia-command')}</option>
+                                <option value="system">{__('System', 'lexia-command')}</option>
+                            </select>
+                        </div>
+                    )}
+                    
                     <div 
                         className="lexia-accessibility-option" 
                         role="menuitem" 
@@ -92,7 +216,8 @@ function AccessibilityMenu({
                                 onChange={(e) => {
                                     e.stopPropagation();
                                     handleHighContrastToggle();
-                                }} 
+                                }}
+                                aria-label={__('High Contrast', 'lexia-command')}
                             />
                             <span className="lexia-accessibility-slider"></span>
                         </label>
@@ -121,7 +246,8 @@ function AccessibilityMenu({
                                 onChange={(e) => {
                                     e.stopPropagation();
                                     handleReducedMotionToggle();
-                                }} 
+                                }}
+                                aria-label={__('Reduced Motion', 'lexia-command')}
                             />
                             <span className="lexia-accessibility-slider"></span>
                         </label>
@@ -150,7 +276,8 @@ function AccessibilityMenu({
                                 onChange={(e) => {
                                     e.stopPropagation();
                                     handleLargerFontSizeToggle();
-                                }} 
+                                }}
+                                aria-label={__('Larger Text', 'lexia-command')}
                             />
                             <span className="lexia-accessibility-slider"></span>
                         </label>

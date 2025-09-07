@@ -1,0 +1,301 @@
+/**
+ * Copy Results Component Styles for Lexia Command
+ */
+
+/* Container */
+.copy-results-container {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    margin-top: 0;
+    padding: 0 20px 20px 20px;
+    border-top: 1px solid var(--lexia-border);
+}
+
+/* Copy button */
+.copy-results-button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: var(--lexia-bg-secondary);
+    border: 1px solid var(--lexia-border);
+    border-radius: 6px;
+    color: var(--lexia-text-primary);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    outline: none;
+}
+
+.copy-results-button:hover {
+    background: var(--lexia-bg-hover);
+    border-color: var(--lexia-border-focus);
+}
+
+.copy-results-button:focus {
+    box-shadow: 0 0 0 2px rgba(77, 184, 255, 0.2);
+    border-color: var(--lexia-border-focus);
+}
+
+.copy-results-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.copy-results-button.loading {
+    background: var(--lexia-bg-hover);
+}
+
+/* Button elements */
+.copy-results-icon {
+    font-size: 16px;
+    line-height: 1;
+    opacity: 0.8;
+}
+
+.copy-results-text {
+    color: var(--lexia-text-primary);
+    white-space: nowrap;
+}
+
+.copy-results-count {
+    color: var(--lexia-text-muted);
+    font-size: 12px;
+    font-weight: 400;
+    background: var(--lexia-bg-primary);
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid var(--lexia-border);
+}
+
+/* Feedback message */
+.copy-results-feedback {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    opacity: 0;
+    transform: translateY(-4px);
+    animation: fadeInUp 0.2s ease-out forwards;
+}
+
+.copy-results-feedback-success {
+    background: rgba(25, 135, 84, 0.1);
+    border: 1px solid rgba(25, 135, 84, 0.3);
+    color: var(--lexia-success);
+}
+
+.copy-results-feedback-error {
+    background: rgba(220, 53, 69, 0.1);
+    border: 1px solid rgba(220, 53, 69, 0.3);
+    color: var(--lexia-error);
+}
+
+.copy-results-feedback-icon {
+    font-size: 14px;
+    line-height: 1;
+}
+
+.copy-results-feedback-text {
+    flex: 1;
+}
+
+/* Dark mode adjustments */
+.lexia-command-dark-mode .copy-results-feedback-success {
+    background: rgba(92, 184, 92, 0.15);
+    border-color: rgba(92, 184, 92, 0.4);
+}
+
+.lexia-command-dark-mode .copy-results-feedback-error {
+    background: rgba(217, 83, 79, 0.15);
+    border-color: rgba(217, 83, 79, 0.4);
+}
+
+/* High contrast mode */
+.lexia-command-high-contrast .copy-results-button {
+    border-width: 2px;
+    font-weight: 600;
+}
+
+.lexia-command-high-contrast .copy-results-count {
+    border-width: 2px;
+}
+
+.lexia-command-high-contrast .copy-results-feedback {
+    border-width: 2px;
+    font-weight: 600;
+}
+
+/* Loading animation */
+.copy-results-button.loading .copy-results-icon {
+    animation: spin 1s linear infinite;
+}
+
+/* Animations */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .copy-results-container {
+        padding: 8px 12px;
+    }
+    
+    .copy-results-button {
+        padding: 6px 10px;
+        font-size: 12px;
+    }
+    
+    .copy-results-icon {
+        font-size: 14px;
+    }
+    
+    .copy-results-count {
+        font-size: 11px;
+        padding: 1px 4px;
+    }
+    
+    .copy-results-feedback {
+        font-size: 11px;
+        padding: 4px 8px;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .copy-results-button,
+    .copy-results-feedback {
+        transition: none;
+        animation: none;
+    }
+    
+    .copy-results-button.loading .copy-results-icon {
+        animation: none;
+    }
+    
+    .copy-results-feedback {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Keyboard navigation focus styles */
+.copy-results-button:focus-visible {
+    outline: 2px solid var(--lexia-border-focus);
+    outline-offset: 2px;
+}
+
+/* Print styles */
+@media print {
+    .copy-results-container {
+        display: none;
+    }
+}
+
+/* Position variations */
+.copy-results-container.inline {
+    flex-direction: row;
+    align-items: center;
+    margin-top: 0;
+    padding: 0;
+    border-top: none;
+}
+
+.copy-results-container.compact .copy-results-button {
+    padding: 4px 8px;
+    font-size: 11px;
+}
+
+.copy-results-container.compact .copy-results-icon {
+    font-size: 12px;
+}
+
+.copy-results-container.compact .copy-results-count {
+    font-size: 10px;
+    padding: 1px 3px;
+}
+
+/* Button size variations */
+.copy-results-button.small {
+    padding: 4px 8px;
+    font-size: 11px;
+}
+
+.copy-results-button.large {
+    padding: 12px 16px;
+    font-size: 14px;
+}
+
+.copy-results-button.large .copy-results-icon {
+    font-size: 18px;
+}
+
+/* Icon-only button variant */
+.copy-results-button.icon-only {
+    width: 32px;
+    height: 32px;
+    padding: 6px;
+    justify-content: center;
+}
+
+.copy-results-button.icon-only .copy-results-text,
+.copy-results-button.icon-only .copy-results-count {
+    display: none;
+}
+
+/* Success state button styling */
+.copy-results-button.success {
+    background: var(--lexia-success);
+    border-color: var(--lexia-success);
+    color: var(--lexia-text-inverse);
+}
+
+.copy-results-button.success:hover {
+    background: var(--lexia-success);
+    opacity: 0.9;
+}
+
+.copy-results-button.success .copy-results-count {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.3);
+    color: var(--lexia-text-inverse);
+}
+
+/* Error state button styling */
+.copy-results-button.error {
+    background: var(--lexia-error);
+    border-color: var(--lexia-error);
+    color: var(--lexia-text-inverse);
+}
+
+.copy-results-button.error:hover {
+    background: var(--lexia-error);
+    opacity: 0.9;
+}
+
+.copy-results-button.error .copy-results-count {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.3);
+    color: var(--lexia-text-inverse);
+}

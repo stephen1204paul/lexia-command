@@ -33,6 +33,58 @@ global.window.lexiaCommandData = {
 global.document.getElementById = jest.fn(() => ({
   addEventListener: jest.fn(),
   removeEventListener: jest.fn(),
+  parentNode: {
+    removeChild: jest.fn(),
+  },
 }));
 
+// Mock document.head for style injection
+if (!global.document.head) {
+  global.document.head = {
+    appendChild: jest.fn(),
+    removeChild: jest.fn(),
+  };
+}
+
+// Mock document.body
+if (!global.document.body) {
+  global.document.body = {
+    appendChild: jest.fn(),
+    removeChild: jest.fn(),
+  };
+}
+
+// Mock CustomEvent for JSDOM
+// First, check if CustomEvent is already available
+if (typeof global.CustomEvent === 'undefined') {
+  global.CustomEvent = class CustomEvent {
+    constructor(type, options = {}) {
+      this.type = type;
+      this.bubbles = Boolean(options.bubbles);
+      this.cancelable = Boolean(options.cancelable);
+      this.detail = options.detail || null;
+    }
+  };
+}
+
+// Also ensure window.CustomEvent exists
+if (typeof window.CustomEvent === 'undefined') {
+  window.CustomEvent = global.CustomEvent;
+}
+
+// Mock localStorage
+const localStorageMock = {
+  getItem: jest.fn(),
+  setItem: jest.fn(),
+  removeItem: jest.fn(),
+  clear: jest.fn(),
+};
+global.localStorage = localStorageMock;
+Object.defineProperty(window, 'localStorage', {
+  value: localStorageMock,
+});
+
 // Add any other global mocks needed for tests
+
+// Add jest-dom matchers
+import '@testing-library/jest-dom';

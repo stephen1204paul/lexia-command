@@ -58,6 +58,25 @@ jest.mock('../../../src/js/components/PostActionMenu', () => () => <div data-tes
 jest.mock('../../../src/js/components/NoCommandSuggestion', () => () => <div data-testid="no-command-suggestion">No Commands</div>);
 jest.mock('../../../src/js/components/AccessibilityMenu', () => () => <div data-testid="accessibility-menu">Accessibility Menu</div>);
 
+// Mock accessibility utilities
+jest.mock('../../../src/js/utils/accessibility', () => ({
+  useFocusTrap: jest.fn(() => jest.fn()),
+  announceToScreenReader: jest.fn(),
+  isHighContrastEnabled: jest.fn(() => false),
+  toggleHighContrast: jest.fn(),
+  addFocusStyles: jest.fn(),
+}));
+
+jest.mock('../../../src/js/utils/accessibilityEnhanced', () => ({
+  manageFocus: jest.fn(),
+  addAriaAttributes: jest.fn(),
+  setupAccessibilityShortcuts: jest.fn(() => jest.fn()),
+  toggleReducedMotion: jest.fn(),
+  isReducedMotionEnabled: jest.fn(() => false),
+  toggleLargerFontSize: jest.fn(),
+  isLargerFontSizeEnabled: jest.fn(() => false),
+}));
+
 describe('CommandBar', () => {
   beforeEach(() => {
     // Reset mocks

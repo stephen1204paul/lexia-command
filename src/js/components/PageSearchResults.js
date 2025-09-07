@@ -1,7 +1,33 @@
 import { __ } from '@wordpress/i18n';
-import { Command } from 'cmdk';
-import { useState } from '@wordpress/element';
-import PageActionMenu from './PageActionMenu';
+import BaseSearchResults from './BaseSearchResults';
+
+// Enhanced page item renderer for search results
+function PageSearchItemRenderer(page, index, { isCommandItem }) {
+    // If this is being called from onSelect (not isCommandItem), execute the action
+    if (!isCommandItem) {
+        // Dispatch an event to show the page action menu
+        const event = new CustomEvent('lexiaCommand:showPageActionMenu', { detail: { page } });
+        window.dispatchEvent(event);
+        return;
+    }
+
+    // Render the actual item content
+    return (
+        <>
+            <div className="lexia-command-page-result-name w-20">
+                <span className="lexia-command-result-title">{page.title}</span>
+            </div>
+            <div className="lexia-command-result-details w-65">
+                <span className="lexia-command-result-status">{page.status}</span>
+            </div>
+            <div className="lexia-command-result-meta w-15">
+                <span className="lexia-command-shortcut">
+                    {__('Enter for options', 'lexia-command')}
+                </span>
+            </div>
+        </>
+    );
+}
 
 function PageSearchResults({ 
     pageResults, 
@@ -12,66 +38,24 @@ function PageSearchResults({
     hasMorePages,
     closeCommandBar
 }) {
-    
-    // Otherwise show the search results
-    if (pageResults.length > 0) {
-        return (
-            <Command.Group>
-                {pageResults.map((page, index) => (
-                    <Command.Item
-                        key={`search-page-`+page.id}
-                        value={`search-page-`+page.id}
-                        className="lexia-command-result"
-                        onMouseEnter={() => setSelectedIndex(index)}
-                        onSelect={() => {
-                            // Dispatch an event to show the page action menu
-                            const event = new CustomEvent('lexiaCommand:showPageActionMenu', { detail: { page } });
-                            window.dispatchEvent(event);
-                        }}
-                        data-selected={index === selectedIndex}
-                    >
-                        <div className="lexia-command-page-result-name w-20">
-                            <span className="lexia-command-result-title">{page.title}</span>
-                        </div>
-                        <div className="lexia-command-result-details w-65">
-                            <span className="lexia-command-result-status">{page.status}</span>
-                        </div>
-                        <div className="lexia-command-result-meta w-15">
-                            <span className="lexia-command-shortcut">
-                                {__('Enter for options', 'lexia-command')}
-                            </span>
-                        </div>
-                    </Command.Item>
-                ))}
-                {loadingMore && (
-                    <Command.Item className="lexia-command-loading-more" value="loading-more">
-                        <div className="lexia-command-loading-indicator">
-                            {__('Loading more pages...', 'lexia-command')}
-                        </div>
-                    </Command.Item>
-                )}
-                {!loadingMore && hasMorePages && (
-                    <Command.Item className="lexia-command-scroll-hint" value="scroll-hint">
-                        <div className="lexia-command-scroll-hint-text">
-                            {__('Scroll for more results', 'lexia-command')}
-                        </div>
-                    </Command.Item>
-                )}
-            </Command.Group>
-        );
-    } else if (searchTerm) {
-        return (
-            <Command.Empty className="lexia-command-no-results">
-                {__('No pages found', 'lexia-command')}
-            </Command.Empty>
-        );
-    } else {
-        return (
-            <Command.Empty className="lexia-command-empty-state">
-                {__('Search for pages...', 'lexia-command')}
-            </Command.Empty>
-        );
-    }
+    return (
+        <BaseSearchResults
+            results={pageResults}
+            searchTerm={searchTerm}
+            selectedIndex={selectedIndex}
+            setSelectedIndex={setSelectedIndex}
+            renderItem={(page, index, context) => 
+                PageSearchItemRenderer(page, index, { 
+                    ...context
+                })
+            }
+            emptyMessage={__('No pages found', 'lexia-command')}
+            emptySearchMessage={__('Search for pages...', 'lexia-command')}
+            loadingMessage={__('Loading more pages...', 'lexia-command')}
+            loadingMore={loadingMore}
+            hasMorePages={hasMorePages}
+        />
+    );
 }
 
 export default PageSearchResults;

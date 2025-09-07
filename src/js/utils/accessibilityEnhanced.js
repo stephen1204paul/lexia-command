@@ -145,7 +145,10 @@ export const toggleReducedMotion = (enabled) => {
       }
     `;
   } else if (styleElement) {
-    styleElement.remove();
+    // Use cross-browser compatible removal method
+    if (styleElement.parentNode) {
+      styleElement.parentNode.removeChild(styleElement);
+    }
   }
   
   // Save preference to localStorage
@@ -203,7 +206,10 @@ export const toggleLargerFontSize = (enabled) => {
       }
     `;
   } else if (styleElement) {
-    styleElement.remove();
+    // Use cross-browser compatible removal method
+    if (styleElement.parentNode) {
+      styleElement.parentNode.removeChild(styleElement);
+    }
   }
   
   // Save preference to localStorage

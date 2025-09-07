@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
+import { fuzzySearch, fuzzySearchWithHighlights } from '../utils/fuzzySearch';
 
 /**
  * Custom hook to manage search functionality for different search types
@@ -68,11 +69,22 @@ export function useSearchManager(options = {}) {
     }, []);
     
     /**
-     * Search WordPress pages
+     * Search WordPress pages with fuzzy search fallback
      * @param {string} term - Search term
+     * @param {Array} allPages - All pages for client-side fuzzy search (optional)
      * @returns {Promise<Array>} Pages
      */
-    const searchPages = useCallback(async (term) => {
+    const searchPages = useCallback(async (term, allPages = []) => {
+        // If we have all pages locally, use fuzzy search
+        if (allPages.length > 0 && term) {
+            const results = fuzzySearch(allPages, term, 'pages', {
+                maxResults: 20,
+                scoreThreshold: 0.5
+            });
+            return results.map(result => result.item);
+        }
+        
+        // Otherwise use WordPress API search
         const queryString = new URLSearchParams({ 
             search: term,
             post_type: 'page',
@@ -93,13 +105,59 @@ export function useSearchManager(options = {}) {
     }, []);
     
     /**
-     * Search commands and content
+     * Perform fuzzy search on commands
+     * @param {Array} commands - Array of commands to search
+     * @param {string} term - Search term
+     * @param {Object} options - Fuzzy search options
+     * @returns {Array} Filtered and sorted commands
+     */
+    const fuzzySearchCommands = useCallback((commands, term, options = {}) => {
+        if (!term || term.trim().length === 0) {
+            return commands.map((item, index) => ({ item, refIndex: index, score: 0 }));
+        }
+        
+        const results = fuzzySearch(commands, term, 'commands', {
+            maxResults: options.maxResults || 50,
+            scoreThreshold: options.scoreThreshold || 0.6,
+            ...options
+        });
+        
+        return results.map(result => result.item);
+    }, []);
+
+    /**
+     * Perform fuzzy search with highlighting
+     * @param {Array} data - Data to search through
+     * @param {string} term - Search term
+     * @param {string} type - Type of search (commands, posts, pages, plugins)
+     * @param {Object} options - Search options
+     * @returns {Array} Results with highlighting information
+     */
+    const fuzzySearchWithHighlight = useCallback((data, term, type = 'commands', options = {}) => {
+        if (!term || term.trim().length === 0) {
+            return data.map((item, index) => ({ 
+                item, 
+                refIndex: index, 
+                score: 0, 
+                highlights: {} 
+            }));
+        }
+        
+        return fuzzySearchWithHighlights(data, term, type, options);
+    }, []);
+
+    /**
+     * Search commands and content with fuzzy matching
      * @param {string} term - Search term
      * @param {Function} searchCommandsFn - Function to search commands
+     * @param {Array} allCommands - All available commands for fuzzy search
      * @returns {Promise<Array>} Search results
      */
-    const searchCommandsAndContent = useCallback(async (term, searchCommandsFn) => {
-        const commandResults = searchCommandsFn(term);
+    const searchCommandsAndContent = useCallback(async (term, searchCommandsFn, allCommands = []) => {
+        // Use fuzzy search for commands if we have the full command list
+        const commandResults = allCommands.length > 0 
+            ? fuzzySearchCommands(allCommands, term)
+            : searchCommandsFn(term);
 
         
         // Only return command results for command search
@@ -108,23 +166,29 @@ export function useSearchManager(options = {}) {
         }
         
         // For other contexts, include content results from the API
-        const queryString = new URLSearchParams({ query: term }).toString();
-        const response = await apiFetch({
-            path: `/${window.lexiaCommandData.restNamespace}/search?${queryString}`,
-            method: 'GET'
-        });
-        
-        return [
-            ...commandResults,
-            ...response.data.map(item => ({
-                ...item,
-                icon: '📝',
-                action: () => {
-                    window.location.href = item.url;
-                }
-            }))
-        ];
-    }, []);
+        try {
+            const queryString = new URLSearchParams({ query: term }).toString();
+            const response = await apiFetch({
+                path: `/${window.lexiaCommandData.restNamespace}/search?${queryString}`,
+                method: 'GET'
+            });
+            
+            return [
+                ...commandResults,
+                ...response.data.map(item => ({
+                    ...item,
+                    icon: '📝',
+                    action: () => {
+                        window.location.href = item.url;
+                    }
+                }))
+            ];
+        } catch (error) {
+            console.error('Content search API failed:', error);
+            // Return just command results if API fails
+            return commandResults;
+        }
+    }, [fuzzySearchCommands]);
     
     /**
      * Load more results for infinite scrolling
@@ -196,11 +260,22 @@ export function useSearchManager(options = {}) {
     }, []);
     
     /**
-     * Search WordPress posts
+     * Search WordPress posts with fuzzy search fallback
      * @param {string} term - Search term
+     * @param {Array} allPosts - All posts for client-side fuzzy search (optional)
      * @returns {Promise<Array>} Posts
      */
-    const searchPosts = useCallback(async (term) => {
+    const searchPosts = useCallback(async (term, allPosts = []) => {
+        // If we have all posts locally, use fuzzy search
+        if (allPosts.length > 0 && term) {
+            const results = fuzzySearch(allPosts, term, 'posts', {
+                maxResults: 20,
+                scoreThreshold: 0.5
+            });
+            return results.map(result => result.item);
+        }
+        
+        // Otherwise use WordPress API search
         const queryString = new URLSearchParams({ 
             search: term,
             post_type: 'post',
@@ -228,7 +303,10 @@ export function useSearchManager(options = {}) {
                 id: post.id,
                 title: post.title.rendered || __('(No title)', 'lexia-command'),
                 url: post.link,
-                status: post.status
+                status: post.status,
+                excerpt: post.excerpt?.rendered || '',
+                content: post.content?.rendered || '',
+                author: post.author || ''
             }));
         } catch (error) {
             console.error('Error fetching posts:', error);
@@ -262,6 +340,10 @@ export function useSearchManager(options = {}) {
         searchPosts,
         searchCommandsAndContent,
         loadMore,
-        setupScrollHandler
+        setupScrollHandler,
+        
+        // Fuzzy search methods
+        fuzzySearchCommands,
+        fuzzySearchWithHighlight
     };
 }

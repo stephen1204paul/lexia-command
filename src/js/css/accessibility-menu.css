@@ -4,24 +4,62 @@
 
 /* Main container for accessibility menu */
 .lexia-accessibility-menu {
+    position: relative;
+    display: inline-block;
+}
+
+/* Accessibility button */
+.lexia-accessibility-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: var(--lexia-bg-secondary);
+    border: 1px solid var(--lexia-border);
+    border-radius: 6px;
+    color: var(--lexia-text-secondary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 16px;
+    flex-shrink: 0;
+}
+
+.lexia-accessibility-button:hover {
+    background: var(--lexia-bg-hover);
+    color: var(--lexia-text-primary);
+}
+
+.lexia-accessibility-button:focus {
+    outline: 2px solid var(--lexia-border-focus);
+    outline-offset: 2px;
+}
+
+/* Accessibility options dropdown */
+.lexia-accessibility-options {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    min-width: 280px;
     padding: 16px;
-    background-color: rgba(30, 30, 30, 0.95);
+    background: var(--lexia-bg-primary);
+    border: 1px solid var(--lexia-border);
     border-radius: 8px;
-    margin-top: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    box-shadow: var(--lexia-shadow-lg);
+    z-index: 1000;
 }
 
 /* Menu title */
 .lexia-accessibility-menu-title {
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 600;
-    color: #fff;
+    color: var(--lexia-text-primary);
     margin-bottom: 12px;
     padding-bottom: 8px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid var(--lexia-border);
 }
 
-/* Options list */
+/* Options list inside dropdown */
 .lexia-accessibility-options {
     display: flex;
     flex-direction: column;
@@ -33,7 +71,21 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    color: #fff;
+    padding: 8px;
+    border-radius: 6px;
+    color: var(--lexia-text-primary);
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.lexia-accessibility-option:hover {
+    background-color: var(--lexia-bg-hover);
+}
+
+.lexia-accessibility-option:focus-within {
+    background-color: var(--lexia-bg-hover);
+    outline: 2px solid var(--lexia-border-focus);
+    outline-offset: 2px;
 }
 
 /* Option label */
@@ -41,12 +93,13 @@
     display: flex;
     align-items: center;
     gap: 8px;
+    flex: 1;
 }
 
 /* Option icon */
 .lexia-accessibility-option-icon {
     font-size: 16px;
-    color: rgba(255, 255, 255, 0.7);
+    color: var(--lexia-text-secondary);
 }
 
 /* Toggle switch container */
@@ -55,6 +108,7 @@
     display: inline-block;
     width: 40px;
     height: 20px;
+    margin-left: 8px;
 }
 
 /* Hide default HTML checkbox */
@@ -72,9 +126,10 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(255, 255, 255, 0.2);
-    transition: .4s;
+    background-color: var(--lexia-bg-secondary);
+    transition: all 0.3s ease;
     border-radius: 20px;
+    border: 1px solid var(--lexia-border);
 }
 
 /* Slider knob */
@@ -84,52 +139,80 @@
     height: 16px;
     width: 16px;
     left: 2px;
-    bottom: 2px;
-    background-color: white;
-    transition: .4s;
+    bottom: 1px;
+    background-color: var(--lexia-text-primary);
+    transition: all 0.3s ease;
     border-radius: 50%;
 }
 
 /* Slider active state */
 input:checked + .lexia-accessibility-slider {
-    background-color: #2196F3;
+    background-color: var(--lexia-accent);
+    border-color: var(--lexia-accent);
 }
 
 input:focus + .lexia-accessibility-slider {
-    box-shadow: 0 0 1px #2196F3;
+    box-shadow: 0 0 0 2px var(--lexia-border-focus);
 }
 
 input:checked + .lexia-accessibility-slider:before {
     transform: translateX(20px);
+    background-color: var(--lexia-text-inverse);
 }
 
 /* Keyboard shortcut hint */
 .lexia-accessibility-shortcut {
-    font-size: 12px;
-    color: rgba(255, 255, 255, 0.5);
+    font-size: 11px;
+    color: var(--lexia-text-muted);
+    background-color: var(--lexia-bg-secondary);
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid var(--lexia-border);
+    font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
     margin-left: 8px;
 }
 
-/* Focus styles for accessibility */
-.lexia-accessibility-option:focus-within {
-    outline: 2px solid #2196F3;
+/* Theme selector styles */
+.lexia-theme-selector {
+    padding: 12px 8px;
+    border-bottom: 1px solid var(--lexia-border);
+    margin-bottom: 8px;
+}
+
+.lexia-theme-selector label {
+    display: block;
+    font-size: 12px;
+    color: var(--lexia-text-secondary);
+    margin-bottom: 6px;
+}
+
+.lexia-theme-selector select {
+    width: 100%;
+    padding: 6px 8px;
+    background-color: var(--lexia-bg-secondary);
+    border: 1px solid var(--lexia-border);
     border-radius: 4px;
+    color: var(--lexia-text-primary);
+    font-size: 12px;
 }
 
-/* High contrast mode specific styles */
-.lexia-high-contrast .lexia-accessibility-menu {
-    background-color: #000;
-    border: 2px solid #fff;
+.lexia-theme-selector select:focus {
+    outline: none;
+    border-color: var(--lexia-border-focus);
+    box-shadow: 0 0 0 2px rgba(77, 184, 255, 0.2);
 }
 
-.lexia-high-contrast .lexia-accessibility-slider {
-    background-color: #666;
-}
-
-.lexia-high-contrast input:checked + .lexia-accessibility-slider {
-    background-color: #fff;
-}
-
-.lexia-high-contrast input:checked + .lexia-accessibility-slider:before {
-    background-color: #000;
+/* Screen reader text */
+.screen-reader-text {
+    position: absolute !important;
+    clip: rect(1px, 1px, 1px, 1px);
+    word-wrap: normal !important;
+    border: 0;
+    -webkit-clip-path: inset(50%);
+    clip-path: inset(50%);
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    padding: 0;
+    width: 1px;
 }

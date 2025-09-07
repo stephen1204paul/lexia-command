@@ -1,0 +1,273 @@
+/**
+ * Dark Mode Theme for Lexia Command
+ */
+
+:root {
+    /* Light mode colors (default) */
+    --lexia-bg-primary: #ffffff;
+    --lexia-bg-secondary: #f8f9fa;
+    --lexia-bg-hover: #e9ecef;
+    --lexia-bg-active: #dee2e6;
+    --lexia-bg-overlay: rgba(0, 0, 0, 0.5);
+    
+    --lexia-text-primary: #212529;
+    --lexia-text-secondary: #6c757d;
+    --lexia-text-muted: #adb5bd;
+    --lexia-text-inverse: #ffffff;
+    
+    --lexia-border: #dee2e6;
+    --lexia-border-focus: #4db8ff;
+    
+    --lexia-accent: #0d6efd;
+    --lexia-accent-hover: #0b5ed7;
+    --lexia-success: #198754;
+    --lexia-warning: #ffc107;
+    --lexia-error: #dc3545;
+    
+    --lexia-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --lexia-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --lexia-shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.15);
+    --lexia-shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.2);
+}
+
+/* Dark mode colors */
+.lexia-command-dark-mode {
+    --lexia-bg-primary: #1e1e1e;
+    --lexia-bg-secondary: #2d2d2d;
+    --lexia-bg-hover: #3a3a3a;
+    --lexia-bg-active: #484848;
+    --lexia-bg-overlay: rgba(0, 0, 0, 0.8);
+    
+    --lexia-text-primary: #e4e4e4;
+    --lexia-text-secondary: #b4b4b4;
+    --lexia-text-muted: #8a8a8a;
+    --lexia-text-inverse: #1e1e1e;
+    
+    --lexia-border: #404040;
+    --lexia-border-focus: #4db8ff;
+    
+    --lexia-accent: #4db8ff;
+    --lexia-accent-hover: #66c4ff;
+    --lexia-success: #5cb85c;
+    --lexia-warning: #f0ad4e;
+    --lexia-error: #d9534f;
+    
+    --lexia-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+    --lexia-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.3);
+    --lexia-shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.4);
+    --lexia-shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.5);
+}
+
+/* Apply theme variables to command bar components */
+.lexia-command-modal {
+    background-color: var(--lexia-bg-overlay);
+}
+
+.lexia-command-container {
+    background-color: var(--lexia-bg-primary);
+    color: var(--lexia-text-primary);
+    box-shadow: var(--lexia-shadow-xl);
+}
+
+.lexia-command input[type="text"],
+.lexia-command input[type="search"] {
+    background-color: var(--lexia-bg-secondary);
+    color: var(--lexia-text-primary);
+    border-color: var(--lexia-border);
+}
+
+.lexia-command input[type="text"]:focus,
+.lexia-command input[type="search"]:focus {
+    border-color: var(--lexia-border-focus);
+    box-shadow: 0 0 0 2px rgba(77, 184, 255, 0.2);
+}
+
+.lexia-command-list {
+    background-color: var(--lexia-bg-primary);
+    border-top: 1px solid var(--lexia-border);
+}
+
+.lexia-command-item {
+    color: var(--lexia-text-primary);
+}
+
+.lexia-command-item:hover {
+    background-color: var(--lexia-bg-hover);
+}
+
+.lexia-command-item[aria-selected="true"] {
+    background-color: var(--lexia-bg-active);
+}
+
+.lexia-command-item-title {
+    color: var(--lexia-text-primary);
+}
+
+.lexia-command-item-description {
+    color: var(--lexia-text-secondary);
+}
+
+.lexia-command-item-meta {
+    color: var(--lexia-text-muted);
+}
+
+.lexia-command-item-shortcut {
+    background-color: var(--lexia-bg-secondary);
+    color: var(--lexia-text-secondary);
+    border: 1px solid var(--lexia-border);
+}
+
+.lexia-command-empty {
+    color: var(--lexia-text-muted);
+}
+
+/* Accessibility menu dark mode styles */
+.lexia-accessibility-menu {
+    background-color: var(--lexia-bg-primary);
+}
+
+.lexia-accessibility-button {
+    background-color: var(--lexia-bg-secondary);
+    color: var(--lexia-text-primary);
+    border-color: var(--lexia-border);
+}
+
+.lexia-accessibility-button:hover {
+    background-color: var(--lexia-bg-hover);
+}
+
+.lexia-accessibility-options {
+    background-color: var(--lexia-bg-primary);
+    border: 1px solid var(--lexia-border);
+    box-shadow: var(--lexia-shadow-lg);
+}
+
+.lexia-accessibility-option {
+    color: var(--lexia-text-primary);
+    border-bottom: 1px solid var(--lexia-border);
+}
+
+.lexia-accessibility-option:hover {
+    background-color: var(--lexia-bg-hover);
+}
+
+.lexia-accessibility-option:last-child {
+    border-bottom: none;
+}
+
+.lexia-accessibility-shortcut {
+    background-color: var(--lexia-bg-secondary);
+    color: var(--lexia-text-secondary);
+    border: 1px solid var(--lexia-border);
+}
+
+/* Toggle switch dark mode styles */
+.lexia-accessibility-toggle {
+    background-color: var(--lexia-bg-secondary);
+    border: 1px solid var(--lexia-border);
+}
+
+.lexia-accessibility-toggle input:checked + .lexia-accessibility-slider {
+    background-color: var(--lexia-accent);
+}
+
+.lexia-accessibility-slider {
+    background-color: var(--lexia-bg-hover);
+}
+
+.lexia-accessibility-slider:before {
+    background-color: var(--lexia-bg-primary);
+}
+
+/* Theme selector styles */
+.lexia-theme-selector select {
+    background-color: var(--lexia-bg-secondary);
+    color: var(--lexia-text-primary);
+    border: 1px solid var(--lexia-border);
+}
+
+.lexia-theme-selector select:focus {
+    border-color: var(--lexia-border-focus);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(77, 184, 255, 0.2);
+}
+
+/* Loading and status indicators */
+.lexia-command-loading {
+    color: var(--lexia-text-secondary);
+}
+
+.lexia-command-loading-spinner {
+    border-color: var(--lexia-border);
+    border-top-color: var(--lexia-accent);
+}
+
+/* Action menus */
+.lexia-action-menu {
+    background-color: var(--lexia-bg-primary);
+    border: 1px solid var(--lexia-border);
+    box-shadow: var(--lexia-shadow-md);
+}
+
+.lexia-action-menu-item {
+    color: var(--lexia-text-primary);
+}
+
+.lexia-action-menu-item:hover {
+    background-color: var(--lexia-bg-hover);
+}
+
+/* Badges and tags */
+.lexia-command-badge {
+    background-color: var(--lexia-bg-secondary);
+    color: var(--lexia-text-secondary);
+    border: 1px solid var(--lexia-border);
+}
+
+.lexia-command-badge.success {
+    background-color: var(--lexia-success);
+    color: var(--lexia-text-inverse);
+    border-color: var(--lexia-success);
+}
+
+.lexia-command-badge.warning {
+    background-color: var(--lexia-warning);
+    color: var(--lexia-text-inverse);
+    border-color: var(--lexia-warning);
+}
+
+.lexia-command-badge.error {
+    background-color: var(--lexia-error);
+    color: var(--lexia-text-inverse);
+    border-color: var(--lexia-error);
+}
+
+/* Smooth transitions */
+.lexia-command-dark-mode * {
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+/* Reduce motion support */
+@media (prefers-reduced-motion: reduce) {
+    .lexia-command-dark-mode * {
+        transition: none;
+    }
+}
+
+/* High contrast mode overrides */
+.lexia-command-high-contrast.lexia-command-dark-mode {
+    --lexia-bg-primary: #000000;
+    --lexia-bg-secondary: #1a1a1a;
+    --lexia-bg-hover: #2a2a2a;
+    --lexia-bg-active: #3a3a3a;
+    
+    --lexia-text-primary: #ffffff;
+    --lexia-text-secondary: #e0e0e0;
+    --lexia-text-muted: #c0c0c0;
+    
+    --lexia-border: #ffffff;
+    --lexia-border-focus: #ffff00;
+    
+    --lexia-accent: #ffff00;
+    --lexia-accent-hover: #ffff66;
+}

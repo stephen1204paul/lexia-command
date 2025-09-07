@@ -1,0 +1,347 @@
+/**
+ * Command Tooltips Styles for Lexia Command
+ */
+
+/* Container */
+.command-tooltips-container {
+    position: relative;
+}
+
+/* Tooltip base styles */
+.command-tooltip {
+    background: var(--lexia-bg-primary);
+    border: 1px solid var(--lexia-border);
+    border-radius: 8px;
+    box-shadow: var(--lexia-shadow-lg);
+    color: var(--lexia-text-primary);
+    font-size: 13px;
+    line-height: 1.4;
+    max-width: 300px;
+    padding: 12px 16px;
+    pointer-events: none;
+    z-index: 10000;
+    opacity: 0;
+    transform: translateY(-4px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+/* Show tooltip */
+.command-tooltip[aria-hidden="false"] {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Tooltip content sections */
+.command-tooltip-content {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.command-tooltip-title {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--lexia-text-primary);
+    margin: 0;
+}
+
+.command-tooltip-description {
+    color: var(--lexia-text-secondary);
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.command-tooltip-category {
+    color: var(--lexia-text-muted);
+    font-size: 12px;
+    font-style: italic;
+}
+
+/* Shortcuts section */
+.command-tooltip-shortcuts {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 4px;
+    padding-top: 8px;
+    border-top: 1px solid var(--lexia-border);
+}
+
+.command-tooltip-shortcuts-label {
+    color: var(--lexia-text-muted);
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.command-tooltip-shortcuts-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.command-tooltip-shortcut {
+    background: var(--lexia-bg-secondary);
+    border: 1px solid var(--lexia-border);
+    border-radius: 4px;
+    color: var(--lexia-text-secondary);
+    font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 2px 6px;
+    white-space: nowrap;
+}
+
+/* Tooltip arrows */
+.command-tooltip-arrow {
+    position: absolute;
+    width: 0;
+    height: 0;
+    border-style: solid;
+}
+
+/* Top arrow (tooltip below element) */
+.tooltip-top .command-tooltip-arrow,
+.tooltip-arrow-top {
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-bottom: 6px solid var(--lexia-bg-primary);
+    top: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.tooltip-top .command-tooltip-arrow::before,
+.tooltip-arrow-top::before {
+    content: '';
+    position: absolute;
+    top: 1px;
+    left: -6px;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-bottom: 6px solid var(--lexia-border);
+}
+
+/* Bottom arrow (tooltip above element) */
+.tooltip-bottom .command-tooltip-arrow,
+.tooltip-arrow-bottom {
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 6px solid var(--lexia-bg-primary);
+    bottom: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.tooltip-bottom .command-tooltip-arrow::before,
+.tooltip-arrow-bottom::before {
+    content: '';
+    position: absolute;
+    bottom: 1px;
+    left: -6px;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 6px solid var(--lexia-border);
+}
+
+/* Left arrow (tooltip to the right of element) */
+.tooltip-left .command-tooltip-arrow,
+.tooltip-arrow-left {
+    border-top: 6px solid transparent;
+    border-bottom: 6px solid transparent;
+    border-right: 6px solid var(--lexia-bg-primary);
+    left: -6px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.tooltip-left .command-tooltip-arrow::before,
+.tooltip-arrow-left::before {
+    content: '';
+    position: absolute;
+    left: 1px;
+    top: -6px;
+    border-top: 6px solid transparent;
+    border-bottom: 6px solid transparent;
+    border-right: 6px solid var(--lexia-border);
+}
+
+/* Right arrow (tooltip to the left of element) */
+.tooltip-right .command-tooltip-arrow,
+.tooltip-arrow-right {
+    border-top: 6px solid transparent;
+    border-bottom: 6px solid transparent;
+    border-left: 6px solid var(--lexia-bg-primary);
+    right: -6px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.tooltip-right .command-tooltip-arrow::before,
+.tooltip-arrow-right::before {
+    content: '';
+    position: absolute;
+    right: 1px;
+    top: -6px;
+    border-top: 6px solid transparent;
+    border-bottom: 6px solid transparent;
+    border-left: 6px solid var(--lexia-border);
+}
+
+/* Positioning classes */
+.tooltip-top {
+    transform-origin: bottom center;
+}
+
+.tooltip-bottom {
+    transform-origin: top center;
+}
+
+.tooltip-left {
+    transform-origin: center right;
+}
+
+.tooltip-right {
+    transform-origin: center left;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .command-tooltip {
+        max-width: 250px;
+        font-size: 12px;
+        padding: 10px 12px;
+    }
+    
+    .command-tooltip-title {
+        font-size: 13px;
+    }
+    
+    .command-tooltip-description {
+        font-size: 12px;
+    }
+    
+    .command-tooltip-shortcut {
+        font-size: 10px;
+        padding: 1px 4px;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .command-tooltip {
+        transition: none;
+    }
+}
+
+/* High contrast mode adjustments */
+.lexia-command-high-contrast .command-tooltip {
+    border-width: 2px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+}
+
+.lexia-command-high-contrast .command-tooltip-shortcut {
+    border-width: 2px;
+    font-weight: 600;
+}
+
+/* Dark mode specific adjustments */
+.lexia-command-dark-mode .command-tooltip {
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+/* Focus indicators for keyboard navigation */
+[data-command-id]:focus-visible {
+    outline: 2px solid var(--lexia-border-focus);
+    outline-offset: 2px;
+}
+
+/* Hover state for command items */
+[data-command-id]:hover {
+    cursor: pointer;
+}
+
+/* Loading state for tooltips */
+.command-tooltip.loading {
+    opacity: 0.7;
+}
+
+.command-tooltip.loading .command-tooltip-content::after {
+    content: '';
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border: 2px solid var(--lexia-border);
+    border-radius: 50%;
+    border-top-color: var(--lexia-accent);
+    animation: tooltip-spin 1s linear infinite;
+    margin-left: 8px;
+}
+
+@keyframes tooltip-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Animation for tooltip appearance */
+@keyframes tooltip-fade-in {
+    from {
+        opacity: 0;
+        transform: scale(0.95) translateY(-4px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.command-tooltip[aria-hidden="false"] {
+    animation: tooltip-fade-in 0.2s ease-out;
+}
+
+/* Error state */
+.command-tooltip.error {
+    border-color: var(--lexia-error);
+    background: var(--lexia-bg-primary);
+}
+
+.command-tooltip.error .command-tooltip-title {
+    color: var(--lexia-error);
+}
+
+/* Prevent text selection in tooltips */
+.command-tooltip {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+/* Ensure tooltips don't interfere with interaction */
+.command-tooltip {
+    pointer-events: none;
+}
+
+/* Style adjustments for different tooltip sizes */
+.command-tooltip.compact {
+    padding: 8px 12px;
+    font-size: 12px;
+}
+
+.command-tooltip.compact .command-tooltip-title {
+    font-size: 13px;
+}
+
+.command-tooltip.detailed {
+    max-width: 400px;
+    padding: 16px 20px;
+    font-size: 14px;
+}
+
+.command-tooltip.detailed .command-tooltip-title {
+    font-size: 16px;
+    margin-bottom: 8px;
+}

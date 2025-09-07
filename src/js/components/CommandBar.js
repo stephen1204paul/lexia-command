@@ -18,9 +18,17 @@ import SearchResults from './SearchResults';
 import NoCommandSuggestion from './NoCommandSuggestion';
 import { useFocusTrap, announceToScreenReader, isHighContrastEnabled, toggleHighContrast, addFocusStyles } from '../utils/accessibility';
 import { manageFocus, addAriaAttributes, setupAccessibilityShortcuts, toggleReducedMotion, isReducedMotionEnabled, toggleLargerFontSize, isLargerFontSizeEnabled } from '../utils/accessibilityEnhanced';
+import { initializeTheme, isDarkModeEnabled } from '../utils/theme';
 import AccessibilityMenu from './AccessibilityMenu';
+import CommandTooltips from './CommandTooltips';
+import CopyResults from './CopyResults';
+import ShortcutSettings from './ShortcutSettings';
 import '../css/command-bar.css';
 import '../css/accessibility-menu.css';
+import '../css/dark-mode.css';
+import '../css/command-tooltips.css';
+import '../css/copy-results.css';
+import '../css/shortcut-settings.css';
 
 function CommandBar() {
     const [isOpen, setIsOpen] = useState(false);
@@ -41,7 +49,9 @@ function CommandBar() {
     const [highContrast, setHighContrast] = useState(false);
     const [reducedMotion, setReducedMotion] = useState(false);
     const [largerFontSize, setLargerFontSize] = useState(false);
+    const [darkMode, setDarkMode] = useState(false);
     const [previouslyFocusedElement, setPreviouslyFocusedElement] = useState(null);
+    const [isShortcutSettingsOpen, setIsShortcutSettingsOpen] = useState(false);
     
     // Reference to the modal container for focus trapping
     const modalRef = useRef(null);
@@ -68,7 +78,9 @@ function CommandBar() {
         searchPosts,
         searchCommandsAndContent,
         loadMore,
-        setupScrollHandler
+        setupScrollHandler,
+        fuzzySearchCommands,
+        fuzzySearchWithHighlight
     } = useSearchManager();
     
     // Use the plugin manager hook
@@ -81,8 +93,14 @@ function CommandBar() {
         activatePlugin 
     } = usePluginManager();
 
-    // Load accessibility preferences on mount
+    // Load accessibility preferences and theme on mount
     useEffect(() => {
+        console.log('🚀 CommandBar: Initializing on mount');
+        console.log('🚀 CommandBar: window.lexiaCommandData:', window.lexiaCommandData);
+        
+        // Initialize theme
+        initializeTheme();
+        
         // Load high contrast preference
         setHighContrast(isHighContrastEnabled());
         
@@ -91,6 +109,11 @@ function CommandBar() {
         
         // Load larger font size preference
         setLargerFontSize(isLargerFontSizeEnabled());
+        
+        // Load dark mode preference
+        const initialDarkMode = isDarkModeEnabled();
+        console.log('🚀 CommandBar: Initial dark mode from isDarkModeEnabled:', initialDarkMode);
+        setDarkMode(initialDarkMode);
         
         // Add focus styles
         addFocusStyles();
@@ -110,6 +133,20 @@ function CommandBar() {
     useEffect(() => {
         toggleLargerFontSize(largerFontSize);
     }, [largerFontSize]);
+    
+    // Listen for theme changes from other sources
+    useEffect(() => {
+        const handleThemeChange = () => {
+            console.log('🎯 CommandBar: Received lexia-theme-change event');
+            const newDarkMode = isDarkModeEnabled();
+            console.log('🎯 CommandBar: isDarkModeEnabled returned:', newDarkMode);
+            setDarkMode(newDarkMode);
+            console.log('🎯 CommandBar: Called setDarkMode with:', newDarkMode);
+        };
+        
+        window.addEventListener('lexia-theme-change', handleThemeChange);
+        return () => window.removeEventListener('lexia-theme-change', handleThemeChange);
+    }, []);
     
     // Setup keyboard shortcuts for accessibility features
     useEffect(() => {
@@ -144,13 +181,20 @@ function CommandBar() {
     const getAvailableCommands = useCallback(() => {
         return commands.filter(command => {
             // Check if user has required capabilities
-            if (command.category === COMMAND_CATEGORIES.PLUGINS && !window.lexiaCommandData.userCaps.manage_options) {
+            const userCaps = window?.lexiaCommandData?.userCaps || {};
+            
+            if (command.category === COMMAND_CATEGORIES.PLUGINS && !userCaps.manage_options) {
                 return false;
             }
-            if (command.category === COMMAND_CATEGORIES.SETTINGS && !window.lexiaCommandData.userCaps.manage_options) {
-                return false;
+            if (command.category === COMMAND_CATEGORIES.SETTINGS && !userCaps.manage_options) {
+                // Special case for theme customization - allow if user has theme capabilities
+                if (command.id === 'customize' && (userCaps.customize || userCaps.edit_theme_options)) {
+                    // Allow access for users with theme capabilities
+                } else {
+                    return false;
+                }
             }
-            if (command.category === COMMAND_CATEGORIES.USERS && !window.lexiaCommandData.userCaps.manage_options) {
+            if (command.category === COMMAND_CATEGORIES.USERS && !userCaps.manage_options) {
                 return false;
             }
             return true;
@@ -365,6 +409,17 @@ function CommandBar() {
         };
     }, []);
 
+    // Handle shortcut settings modal
+    useEffect(() => {
+        const handleOpenShortcutSettings = () => {
+            setIsShortcutSettingsOpen(true);
+            // Don't close the command bar, just show the settings in place
+        };
+
+        window.addEventListener('lexiaCommand:openShortcutSettings', handleOpenShortcutSettings);
+        return () => window.removeEventListener('lexiaCommand:openShortcutSettings', handleOpenShortcutSettings);
+    }, []);
+
     // Search handler
     useEffect(() => {
         // Skip search if we're currently loading more results via infinite scroll
@@ -417,12 +472,18 @@ function CommandBar() {
                     // Set search context to 'commands' for command search
                     window.lexiaCommandData.searchContext = 'commands';
                     
-                    // First set immediate results from local command search
-                    const commandResults = searchCommands(searchTerm) || [];
-                    setResults(commandResults);
+                    // Use fuzzy search for better command matching
+                    const allCommands = getAvailableCommands();
+                    const fuzzyResults = fuzzySearchCommands(allCommands, searchTerm, {
+                        maxResults: 50,
+                        scoreThreshold: 0.6
+                    });
                     
-                    // Then fetch content search results with API call
-                    const searchResults = await searchCommandsAndContent(searchTerm, searchCommands);
+                    // First set immediate results from fuzzy search
+                    setResults(fuzzyResults);
+                    
+                    // Then fetch content search results with API call, passing all commands for fuzzy search
+                    const searchResults = await searchCommandsAndContent(searchTerm, searchCommands, allCommands);
                     setResults(searchResults);
                     
                     // Announce search results to screen readers
@@ -434,6 +495,7 @@ function CommandBar() {
                     );
                 } catch (error) {
                     console.error('Search failed:', error);
+                    // Fallback to regular search if fuzzy search fails
                     setResults(searchCommands(searchTerm) || []);
                 } finally {
                     setLoading(false);
@@ -496,9 +558,24 @@ function CommandBar() {
         setLoading, setSelectedIndex]);
 
     const openCommandBar = useCallback(() => {
+        // Reset all states when opening command bar
         setIsOpen(true);
         setSelectedIndex(0);
-    }, [setSelectedIndex]);
+        setIsShortcutSettingsOpen(false);
+        resetSearch();
+        setResults([]);
+        setPluginResults([]);
+        setPageResults([]);
+        setIsPluginSearch(false);
+        setIsPageSearch(false);
+        setIsPostSearch(false);
+        setIsPageActionMenu(false);
+        setIsPostActionMenu(false);
+        setIsPluginActionMenu(false);
+        setIsInstalledPlugins(false);
+        setSelectedPage(null);
+        setSelectedPlugin(null);
+    }, [setSelectedIndex, resetSearch]);
 
     const closeCommandBar = useCallback(() => {
         setIsOpen(false);
@@ -512,6 +589,7 @@ function CommandBar() {
         setIsPageActionMenu(false);
         setIsPostActionMenu(false);
         setIsPluginActionMenu(false);
+        setIsShortcutSettingsOpen(false);
         setSelectedPage(null);
         setSelectedPlugin(null);
     }, [resetSearch]);
@@ -582,14 +660,76 @@ function CommandBar() {
         return () => {};
     }, [isOpen, isPluginSearch, isPageSearch, isPostSearch, currentPage, totalPages, loadingMore, searchTerm, setupScrollHandler, loadMorePlugins, loadMorePages, loadMorePosts]);
 
-    // Register keyboard shortcut
-    useKeyboardShortcut(
-        { key: 'k', metaKey: true },
-        (event) => {
+    // Register keyboard shortcuts using the new mode
+    const handleShortcutCommand = useCallback((command, event) => {
+        console.log(`🔑 CommandBar: Handling shortcut command: ${command}, isOpen: ${isOpen}`);
+        
+        if (command === 'openCommand') {
             event.preventDefault();
             openCommandBar();
+        } else if (command.startsWith('selectResult') && isOpen) {
+            event.preventDefault();
+            const resultNumber = parseInt(command.replace('selectResult', ''));
+            const index = resultNumber - 1; // Convert to 0-based index
+            
+            // Get the appropriate results array based on current view
+            let currentResults = [];
+            if (isPluginSearch) {
+                currentResults = pluginResults;
+            } else if (isPageSearch) {
+                currentResults = pageResults;
+            } else if (isPostSearch) {
+                currentResults = postResults;
+            } else if (isInstalledPlugins) {
+                currentResults = installedPlugins;
+            } else {
+                // If no specific search is active, use results or fall back to default commands
+                currentResults = results.length > 0 ? results : getAvailableCommands();
+            }
+            
+            console.log(`🔑 CommandBar: Trying to select result ${index + 1}, currentResults length: ${currentResults.length}`);
+            console.log(`🔑 CommandBar: Current results:`, currentResults);
+            
+            // Execute the action for the selected result
+            if (currentResults[index]) {
+                console.log(`🔑 CommandBar: Executing action for result:`, currentResults[index]);
+                const result = currentResults[index];
+                
+                // Handle different types of results
+                if (isInstalledPlugins && window.lexiaCommandHandlePluginActionMenu) {
+                    window.lexiaCommandHandlePluginActionMenu(result);
+                } else if (isPageSearch && result.id) {
+                    // Navigate to page
+                    window.location.href = `${window.lexiaCommandData.adminUrl}post.php?post=${result.id}&action=edit`;
+                } else if (isPostSearch && result.id) {
+                    // Navigate to post
+                    window.location.href = `${window.lexiaCommandData.adminUrl}post.php?post=${result.id}&action=edit`;
+                } else if (isPluginSearch && result.slug) {
+                    // Install or activate plugin
+                    if (result.status === 'not-installed') {
+                        installPlugin(result.slug);
+                    } else if (result.status === 'inactive') {
+                        activatePlugin(result.slug, result.plugin_path);
+                    }
+                } else if (result.action) {
+                    // Execute command action
+                    const shouldClose = result.action(closeCommandBar);
+                    if (shouldClose !== false) {
+                        closeCommandBar();
+                    }
+                }
+            } else {
+                console.log(`🔑 CommandBar: No result found at index ${index}`);
+            }
+        } else if (command.startsWith('selectResult')) {
+            console.log(`🔑 CommandBar: selectResult shortcut triggered but command bar is not open`);
         }
-    );
+    }, [isOpen, openCommandBar, closeCommandBar, isPluginSearch, isPageSearch, isPostSearch, 
+        isInstalledPlugins, pluginResults, pageResults, postResults, installedPlugins, 
+        results, installPlugin, activatePlugin]);
+
+    // Register keyboard shortcuts with the new mode that loads custom shortcuts
+    useKeyboardShortcut(handleShortcutCommand);
 
     // Handle navigation key shortcuts
     const handleNavigationKeyShortcut = useCallback((event) => {
@@ -642,11 +782,13 @@ function CommandBar() {
     }
 
     return (
+        <>
         <div className="lexia-command-modal-overlay components-modal__screen-overlay">
-            <Command className="lexia-command-modal" label="Command Menu" ref={modalRef}>
+            <div className="lexia-command-modal" ref={modalRef}>
                 <div className="components-modal__header">
                     <div className="components-modal__header-heading" id="lexia-command-dialog-title">
-                        {isPluginSearch ? __('Search WordPress Plugins', 'lexia-command') : 
+                        {isShortcutSettingsOpen ? __('Keyboard Shortcuts Settings', 'lexia-command') :
+                         isPluginSearch ? __('Search WordPress Plugins', 'lexia-command') : 
                          isPageSearch && !isPageActionMenu ? __('Search Pages', 'lexia-command') :
                          isPageActionMenu ? __('Page Actions', 'lexia-command') :
                          isPostSearch && !isPostActionMenu ? __('Search Posts', 'lexia-command') :
@@ -662,6 +804,8 @@ function CommandBar() {
                         setReducedMotion={setReducedMotion}
                         largerFontSize={largerFontSize}
                         setLargerFontSize={setLargerFontSize}
+                        darkMode={darkMode}
+                        setDarkMode={setDarkMode}
                     />
                     
                     <button 
@@ -676,33 +820,34 @@ function CommandBar() {
                     </button>
                 </div>
                 
-                {/* Conditionally render different screens based on state */}
-                {isPluginActionMenu && selectedPlugin ? (
-                    // Render PluginActionMenu as a completely separate screen
-                    <div className="lexia-command-container">
-                        <PluginActionMenu
-                            plugin={selectedPlugin}
-                            closeCommandBar={closeCommandBar}
-                            onBack={() => {
-                                setIsPluginActionMenu(false);
-                                setSelectedPlugin(null);
-                                setIsInstalledPlugins(true);
-                                announceToScreenReader(__('Installed plugins view activated', 'lexia-command'));
-                            }}
-                        />
-                    </div>
-                ) : isPageActionMenu && selectedPage ? (
-                    // Render PageActionMenu as a completely separate screen
-                    <div className="lexia-command-container">
-                        <PageActionMenu
-                            page={selectedPage}
-                            closeCommandBar={closeCommandBar}
-                            onBack={() => {
-                                setIsPageActionMenu(false);
-                                setSelectedPage(null);
-                                announceToScreenReader(__('Page search mode activated', 'lexia-command'));
-                            }}
+                <CommandTooltips commands={getAvailableCommands()} enabled={!isPluginSearch && !isPageSearch && !isPostSearch && !isShortcutSettingsOpen}>
+                    {/* Conditionally render different screens based on state */}
+                    {isPluginActionMenu && selectedPlugin ? (
+                        // Render PluginActionMenu as a completely separate screen
+                        <div className="lexia-command-container">
+                            <PluginActionMenu
+                                plugin={selectedPlugin}
+                                closeCommandBar={closeCommandBar}
+                                onBack={() => {
+                                    setIsPluginActionMenu(false);
+                                    setSelectedPlugin(null);
+                                    setIsInstalledPlugins(true);
+                                    announceToScreenReader(__('Installed plugins view activated', 'lexia-command'));
+                                }}
                             />
+                        </div>
+                    ) : isPageActionMenu && selectedPage ? (
+                        // Render PageActionMenu as a completely separate screen
+                        <div className="lexia-command-container">
+                            <PageActionMenu
+                                page={selectedPage}
+                                closeCommandBar={closeCommandBar}
+                                onBack={() => {
+                                    setIsPageActionMenu(false);
+                                    setSelectedPage(null);
+                                    announceToScreenReader(__('Page search mode activated', 'lexia-command'));
+                                }}
+                                />
                         </div>
                     ) : isPostActionMenu && selectedPage ? (
                         // Render PostActionMenu as a completely separate screen
@@ -719,18 +864,25 @@ function CommandBar() {
                         </div>
                     ) : (
                         // Render the regular command bar content
-                        <div className="lexia-command-container">
-                            <Command.Input 
-                                value={searchTerm}
-                                onValueChange={handleSearchTermChange}
-                                placeholder={isPluginSearch ? __('Search for plugins...', 'lexia-command') : 
-                                          isInstalledPlugins ? __('Search installed plugins...', 'lexia-command') :
-                                          isPageSearch ? __('Search for pages...', 'lexia-command') :
-                                          __('Type a command or search...', 'lexia-command')}
-                                className="lexia-command-search"
-                                autoComplete="off"
-                                autoFocus
-                            />
+                        <Command 
+                            className="lexia-command-content" 
+                            label="Command Menu" 
+                            filter={() => 1}
+                            shouldFilter={false}
+                        >
+                            {!isShortcutSettingsOpen && (
+                                <Command.Input 
+                                    value={searchTerm}
+                                    onValueChange={handleSearchTermChange}
+                                    placeholder={isPluginSearch ? __('Search for plugins...', 'lexia-command') : 
+                                              isInstalledPlugins ? __('Search installed plugins...', 'lexia-command') :
+                                              isPageSearch ? __('Search for pages...', 'lexia-command') :
+                                              __('Type a command or search...', 'lexia-command')}
+                                    className="lexia-command-search"
+                                    autoComplete="off"
+                                    autoFocus
+                                />
+                            )}
                             
                             <Command.List className="lexia-command-results">
                                 {loading && !loadingMore && !installingPlugin && !activatingPlugin ? (
@@ -757,6 +909,14 @@ function CommandBar() {
                                         setSelectedIndex={setSelectedIndex}
                                         closeCommandBar={closeCommandBar}
                                         onSelectPlugin={window.lexiaCommandHandlePluginActionMenu}
+                                    />
+                                ) : isShortcutSettingsOpen ? (
+                                    <ShortcutSettings
+                                        onBack={() => {
+                                            setIsShortcutSettingsOpen(false);
+                                            announceToScreenReader(__('Returned to command bar', 'lexia-command'));
+                                        }}
+                                        closeCommandBar={closeCommandBar}
                                     />
                                 ) : isPageSearch ? (
                                     <PageSearchResults
@@ -796,10 +956,35 @@ function CommandBar() {
                                     />
                                 )}
                             </Command.List>
-                        </div>
+                            
+                            {/* Copy Results functionality */}
+                            {((isPluginSearch && pluginResults.length > 0) ||
+                              (isPageSearch && pageResults.length > 0) ||
+                              (isPostSearch && postResults.length > 0) ||
+                              (results.length > 0 && searchTerm)) && (
+                                <CopyResults 
+                                    results={
+                                        isPluginSearch ? pluginResults.map(p => ({ title: p.name, url: p.homepage || `https://wordpress.org/plugins/${p.slug}/` })) :
+                                        isPageSearch ? pageResults.map(p => ({ title: p.title, url: p.link })) :
+                                        isPostSearch ? postResults.map(p => ({ title: p.title, url: p.link })) :
+                                        results.map(r => ({ title: r.title, description: r.description || '' }))
+                                    }
+                                    format="text"
+                                    buttonText={
+                                        isPluginSearch ? __('Copy Plugins', 'lexia-command') :
+                                        isPageSearch ? __('Copy Pages', 'lexia-command') :
+                                        isPostSearch ? __('Copy Posts', 'lexia-command') :
+                                        __('Copy Results', 'lexia-command')
+                                    }
+                                />
+                            )}
+                        </Command>
                     )}
-                </Command>
+                </CommandTooltips>
             </div>
-        );
-    }
+        </div>
+        </>
+    );
+}
+
 export default CommandBar;

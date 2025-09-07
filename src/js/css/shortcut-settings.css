@@ -1,0 +1,819 @@
+/**
+ * Shortcut Settings Modal Styles
+ */
+
+.shortcut-settings-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100000;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.shortcut-settings-modal {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    max-width: 800px;
+    width: 100%;
+    max-height: 90vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.shortcut-settings-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid #e0e0e0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #f8f9fa;
+}
+
+.shortcut-settings-header h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1d2327;
+}
+
+.shortcut-settings-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #666;
+    padding: 4px;
+    border-radius: 4px;
+    line-height: 1;
+    transition: all 0.2s ease;
+}
+
+.shortcut-settings-close:hover {
+    background: #e0e0e0;
+    color: #333;
+}
+
+.shortcut-settings-content {
+    padding: 24px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+/* Conflicts Section */
+.shortcut-conflicts {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 6px;
+    padding: 16px;
+    margin-bottom: 24px;
+}
+
+.shortcut-conflicts h3 {
+    margin: 0 0 12px 0;
+    color: #856404;
+    font-size: 1rem;
+}
+
+.conflict-item {
+    margin: 8px 0;
+    padding: 8px;
+    background: white;
+    border-radius: 4px;
+    font-family: monospace;
+    border-left: 3px solid #f39c12;
+}
+
+/* Shortcuts List */
+.shortcuts-list {
+    margin-bottom: 24px;
+}
+
+.shortcut-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    background: white;
+    transition: all 0.2s ease;
+}
+
+.shortcut-item:hover {
+    border-color: #c0c0c0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.shortcut-info {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-right: 16px;
+}
+
+.shortcut-name {
+    font-weight: 500;
+    color: #1d2327;
+}
+
+.shortcut-keys kbd {
+    background: #f1f3f4;
+    border: 1px solid #c0c0c0;
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-family: monospace;
+    font-size: 0.875rem;
+    color: #333;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.shortcut-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.shortcut-actions button {
+    padding: 6px 12px;
+    border: 1px solid #c0c0c0;
+    border-radius: 4px;
+    background: white;
+    cursor: pointer;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+}
+
+.shortcut-actions button:hover:not(:disabled) {
+    background: #f8f9fa;
+    border-color: #a0a0a0;
+}
+
+.shortcut-actions button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.edit-shortcut {
+    color: #0073aa;
+}
+
+.edit-shortcut:hover:not(:disabled) {
+    background: #e7f3ff;
+    border-color: #0073aa;
+}
+
+.reset-shortcut {
+    color: #d63638;
+}
+
+.reset-shortcut:hover:not(:disabled) {
+    background: #ffeaea;
+    border-color: #d63638;
+}
+
+/* Recording State */
+.recording-indicator {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.recording-prompt {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-style: italic;
+    color: #666;
+}
+
+.recording-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.save-shortcut {
+    background: #00a32a !important;
+    color: white !important;
+    border-color: #00a32a !important;
+}
+
+.save-shortcut:hover:not(:disabled) {
+    background: #008a20 !important;
+}
+
+.cancel-recording {
+    background: #f0f0f0 !important;
+    color: #666 !important;
+}
+
+/* Main Actions */
+.shortcut-settings-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 0;
+    border-top: 1px solid #e0e0e0;
+    margin-top: 16px;
+}
+
+.reset-all-shortcuts {
+    padding: 8px 16px;
+    background: #d63638;
+    color: white;
+    border: 1px solid #d63638;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.reset-all-shortcuts:hover:not(:disabled) {
+    background: #b32d2e;
+}
+
+.reset-all-shortcuts:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.import-export-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.export-shortcuts,
+.toggle-import-export {
+    padding: 8px 16px;
+    background: #0073aa;
+    color: white;
+    border: 1px solid #0073aa;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.export-shortcuts:hover:not(:disabled),
+.toggle-import-export:hover:not(:disabled) {
+    background: #005a87;
+}
+
+.export-shortcuts:disabled,
+.toggle-import-export:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Import/Export Section */
+.import-export-section {
+    margin-top: 24px;
+    padding: 16px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    border: 1px solid #e0e0e0;
+}
+
+.import-export-section h3 {
+    margin: 0 0 12px 0;
+    font-size: 1rem;
+    color: #1d2327;
+}
+
+.shortcuts-config-textarea {
+    width: 100%;
+    min-height: 150px;
+    padding: 12px;
+    border: 1px solid #c0c0c0;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.875rem;
+    resize: vertical;
+    box-sizing: border-box;
+}
+
+.shortcuts-config-textarea:focus {
+    outline: none;
+    border-color: #0073aa;
+    box-shadow: 0 0 0 1px #0073aa;
+}
+
+.import-export-buttons {
+    display: flex;
+    gap: 12px;
+    margin-top: 12px;
+}
+
+.import-shortcuts {
+    padding: 8px 16px;
+    background: #00a32a;
+    color: white;
+    border: 1px solid #00a32a;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.import-shortcuts:hover:not(:disabled) {
+    background: #008a20;
+}
+
+.import-shortcuts:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.close-import-export {
+    padding: 8px 16px;
+    background: #f0f0f0;
+    color: #666;
+    border: 1px solid #c0c0c0;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.close-import-export:hover {
+    background: #e0e0e0;
+}
+
+/* Help Section */
+.shortcuts-help {
+    margin-top: 24px;
+    padding: 16px;
+    background: #f0f6fc;
+    border: 1px solid #c7d2fe;
+    border-radius: 6px;
+}
+
+.shortcuts-help h3 {
+    margin: 0 0 12px 0;
+    font-size: 1rem;
+    color: #0d1117;
+}
+
+.shortcuts-help ul {
+    margin: 0;
+    padding-left: 20px;
+    color: #586069;
+}
+
+.shortcuts-help li {
+    margin: 6px 0;
+}
+
+/* Dark Mode Support */
+.lexia-command-dark-mode .shortcut-settings-modal {
+    background: #2d3748;
+    color: #e2e8f0;
+}
+
+.lexia-command-dark-mode .shortcut-settings-header {
+    background: #1a202c;
+    border-bottom-color: #4a5568;
+}
+
+.lexia-command-dark-mode .shortcut-settings-header h2 {
+    color: #e2e8f0;
+}
+
+.lexia-command-dark-mode .shortcut-item {
+    background: #374151;
+    border-color: #4a5568;
+}
+
+.lexia-command-dark-mode .shortcut-item:hover {
+    border-color: #6b7280;
+}
+
+.lexia-command-dark-mode .shortcut-name {
+    color: #e2e8f0;
+}
+
+.lexia-command-dark-mode .shortcut-keys kbd {
+    background: #4a5568;
+    border-color: #6b7280;
+    color: #e2e8f0;
+}
+
+.lexia-command-dark-mode .import-export-section,
+.lexia-command-dark-mode .shortcuts-help {
+    background: #374151;
+    border-color: #4a5568;
+}
+
+.lexia-command-dark-mode .shortcuts-config-textarea {
+    background: #2d3748;
+    border-color: #4a5568;
+    color: #e2e8f0;
+}
+
+/* Integrated Shortcut Settings (within command bar) */
+.shortcut-settings-header {
+    padding: 12px 16px;
+    background: none;
+    border-bottom: 1px solid #e0e0e0;
+    flex-shrink: 0; /* Prevent header from shrinking */
+}
+
+.back-button {
+    background: none;
+    border: none;
+    color: #0073aa;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 8px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.back-button:hover {
+    background: #e7f3ff;
+    color: #005a87;
+}
+
+.shortcut-conflicts {
+    margin: 12px 16px;
+    padding: 12px;
+    font-size: 13px;
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 6px;
+}
+
+.shortcut-conflicts .conflict-item {
+    display: block;
+    margin: 4px 0;
+    font-size: 12px;
+}
+
+.shortcut-settings-list {
+    flex: 1 !important;
+    height: 0 !important; /* Force flexbox to constrain height */
+    overflow-y: auto !important;
+    padding: 8px !important;
+}
+
+.shortcuts-section,
+.actions-section {
+    margin-bottom: 24px;
+}
+
+.section-heading {
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    color: #666 !important;
+    text-transform: uppercase !important;
+    padding: 8px 12px 8px 12px !important;
+    margin: 0 0 8px 0 !important;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.shortcuts-list-content,
+.actions-list-content {
+    padding: 0 4px;
+}
+
+.shortcut-settings-container .shortcut-item {
+    display: flex !important;
+    align-items: center !important;
+    padding: 12px !important;
+    margin: 4px 0 !important;
+    border: 1px solid #e0e0e0 !important;
+    border-radius: 6px !important;
+    background: white !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+}
+
+.shortcut-settings-container .shortcut-item:hover,
+.shortcut-settings-container .shortcut-item[data-selected="true"] {
+    background: #f8f9fa !important;
+    border-color: #c0c0c0 !important;
+}
+
+.shortcut-settings-container .shortcut-item .shortcut-info {
+    flex: 1 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+}
+
+.shortcut-settings-container .shortcut-item .shortcut-name {
+    font-weight: 500 !important;
+    color: #1d2327 !important;
+    font-size: 14px !important;
+}
+
+.shortcut-settings-container .shortcut-item .shortcut-actions {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+}
+
+.shortcut-settings-container .shortcut-item .shortcut-keys {
+    background: #f1f3f4 !important;
+    border: 1px solid #c0c0c0 !important;
+    border-radius: 4px !important;
+    padding: 4px 8px !important;
+    font-family: monospace !important;
+    font-size: 12px !important;
+    color: #333 !important;
+}
+
+.shortcut-settings-container .shortcut-item .edit-button,
+.shortcut-settings-container .shortcut-item .reset-button {
+    background: none !important;
+    border: 1px solid #c0c0c0 !important;
+    border-radius: 4px !important;
+    padding: 4px 8px !important;
+    font-size: 11px !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+}
+
+.shortcut-settings-container .shortcut-item .edit-button {
+    color: #0073aa !important;
+}
+
+.shortcut-settings-container .shortcut-item .edit-button:hover {
+    background: #e7f3ff !important;
+    border-color: #0073aa !important;
+}
+
+.shortcut-settings-container .shortcut-item .reset-button {
+    color: #d63638 !important;
+}
+
+.shortcut-settings-container .shortcut-item .reset-button:hover {
+    background: #ffeaea !important;
+    border-color: #d63638 !important;
+}
+
+.shortcut-settings-container .shortcut-action-item {
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    padding: 12px !important;
+    margin: 4px 0 !important;
+    border: 1px solid #e0e0e0 !important;
+    border-radius: 6px !important;
+    background: white !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+}
+
+.shortcut-settings-container .shortcut-action-item:hover,
+.shortcut-settings-container .shortcut-action-item[data-selected="true"] {
+    background: #f8f9fa !important;
+    border-color: #c0c0c0 !important;
+}
+
+.shortcut-settings-container .shortcut-action-item .action-icon {
+    font-size: 16px !important;
+}
+
+/* Recording interface */
+.recording-section {
+    padding: 24px;
+    text-align: center;
+}
+
+.recording-section h3 {
+    margin: 0 0 24px 0;
+    color: #1d2327;
+    font-size: 18px;
+}
+
+.recorded-shortcut .large-kbd {
+    background: #f1f3f4;
+    border: 2px solid #0073aa;
+    border-radius: 8px;
+    padding: 12px 20px;
+    font-family: monospace;
+    font-size: 18px;
+    font-weight: bold;
+    color: #333;
+    display: inline-block;
+    margin-bottom: 16px;
+}
+
+.recording-actions {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+}
+
+.recording-actions .action-button {
+    background: #00a32a;
+    color: white;
+    border: 1px solid #00a32a;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.recording-actions .action-button:hover:not(:disabled) {
+    background: #008a20;
+}
+
+.recording-actions .action-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.recording-actions .secondary-button {
+    background: #f0f0f0;
+    color: #666;
+    border: 1px solid #c0c0c0;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.recording-actions .secondary-button:hover {
+    background: #e0e0e0;
+}
+
+.error-message {
+    color: #d63638;
+    font-size: 14px;
+    margin-top: 8px;
+}
+
+.waiting-for-keys p {
+    margin: 8px 0;
+    font-size: 16px;
+}
+
+.help-text {
+    color: #666;
+    font-size: 14px;
+}
+
+/* Import/Export interface */
+.import-export-section {
+    padding: 16px;
+}
+
+.import-export-section h3 {
+    margin: 0 0 16px 0;
+    font-size: 16px;
+    color: #1d2327;
+}
+
+.shortcuts-config-textarea {
+    width: 100%;
+    min-height: 200px;
+    max-height: 300px;
+    padding: 12px;
+    border: 1px solid #c0c0c0;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 12px;
+    resize: vertical;
+    box-sizing: border-box;
+}
+
+.shortcuts-config-textarea:focus {
+    outline: none;
+    border-color: #0073aa;
+    box-shadow: 0 0 0 1px #0073aa;
+}
+
+.import-export-buttons {
+    display: flex;
+    gap: 12px;
+    margin-top: 12px;
+    justify-content: flex-end;
+}
+
+.shortcut-settings-container .shortcuts-help {
+    padding: 12px 16px;
+    background: #f0f6fc;
+    border-top: 1px solid #e0e0e0;
+    margin: 0;
+    border-radius: 0;
+    flex-shrink: 0; /* Prevent help section from shrinking */
+}
+
+.shortcut-settings-container .shortcuts-help p {
+    margin: 0;
+    color: #586069;
+    font-size: 13px;
+}
+
+/* Shortcut-specific styles */
+.shortcut-keys {
+    background: #f1f3f4 !important;
+    border: 1px solid #c0c0c0 !important;
+    border-radius: 4px !important;
+    padding: 4px 8px !important;
+    font-family: monospace !important;
+    font-size: 12px !important;
+    color: #333 !important;
+    display: inline-block !important;
+}
+
+.shortcut-buttons {
+    display: flex !important;
+    gap: 8px !important;
+}
+
+.edit-button,
+.reset-button {
+    background: none !important;
+    border: 1px solid #c0c0c0 !important;
+    border-radius: 4px !important;
+    padding: 4px 8px !important;
+    font-size: 11px !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+}
+
+.edit-button {
+    color: #0073aa !important;
+}
+
+.edit-button:hover {
+    background: #e7f3ff !important;
+    border-color: #0073aa !important;
+}
+
+.reset-button {
+    color: #d63638 !important;
+}
+
+.reset-button:hover {
+    background: #ffeaea !important;
+    border-color: #d63638 !important;
+}
+
+.shortcut-icon,
+.action-icon {
+    font-size: 16px !important;
+}
+
+/* Dark mode for integrated settings */
+.lexia-command-dark-mode .shortcut-keys {
+    background: #4a5568 !important;
+    border-color: #6b7280 !important;
+    color: #e2e8f0 !important;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .shortcut-settings-overlay {
+        padding: 10px;
+    }
+    
+    .shortcut-settings-modal {
+        max-height: 95vh;
+    }
+    
+    .shortcut-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    
+    .shortcut-info {
+        width: 100%;
+        margin-right: 0;
+    }
+    
+    .shortcut-actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+    
+    .shortcut-settings-actions {
+        flex-direction: column;
+        gap: 16px;
+        align-items: stretch;
+    }
+    
+    .import-export-actions {
+        justify-content: center;
+    }
+    
+    /* Integrated responsive styles */
+    .shortcut-settings-list .shortcut-item .shortcut-info {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    
+    .shortcut-settings-list .shortcut-item .shortcut-actions {
+        align-self: flex-end;
+    }
+}

@@ -36,6 +36,10 @@ class Lexia_Command {
 		// Always register REST routes
 		add_action('rest_api_init', array($this, 'register_rest_routes'));
 
+		// Register AJAX handlers
+		add_action('wp_ajax_lexia_toggle_maintenance', array($this, 'handle_toggle_maintenance'));
+		add_action('wp_ajax_lexia_clear_cache', array($this, 'handle_clear_cache'));
+
 		// Register scripts and styles
 		add_action('wp_enqueue_scripts', array($this, 'register_assets'));
 		add_action('admin_enqueue_scripts', array($this, 'register_assets'));
@@ -107,6 +111,19 @@ class Lexia_Command {
 		wp_enqueue_script($this->plugin_name);
 		wp_enqueue_style($this->plugin_name);
 
+		// Get user preferences from database
+		$user_id = get_current_user_id();
+		$user_preferences = array();
+		if ($user_id) {
+			$user_preferences = array(
+				'darkMode' => get_user_meta($user_id, 'lexia_command_darkMode', true) ?: 'false',
+				'theme' => get_user_meta($user_id, 'lexia_command_theme', true) ?: 'light',
+				'highContrast' => get_user_meta($user_id, 'lexia_command_highContrast', true) ?: 'false',
+				'reducedMotion' => get_user_meta($user_id, 'lexia_command_reducedMotion', true) ?: 'false',
+				'largerFontSize' => get_user_meta($user_id, 'lexia_command_largerFontSize', true) ?: 'false',
+			);
+		}
+
 		wp_localize_script($this->plugin_name, 'lexiaCommandData', array(
 			'nonce' => wp_create_nonce('wp_rest'),
 			'restNamespace' => 'lexia-command/v1',
@@ -118,8 +135,105 @@ class Lexia_Command {
 				'edit_posts' => current_user_can('edit_posts'),
 				'manage_options' => current_user_can('manage_options'),
 				'upload_files' => current_user_can('upload_files'),
+				'edit_theme_options' => current_user_can('edit_theme_options'),
+				'customize' => current_user_can('customize'),
+				'switch_themes' => current_user_can('switch_themes'),
 			),
+			'userPreferences' => $user_preferences,
+			'plugins' => $this->get_available_plugin_integrations(),
+			'isBlockWidgets' => wp_use_widgets_block_editor(),
 		));
+	}
+
+	/**
+	 * Get available plugin integrations
+	 * Detects popular plugins and returns availability info
+	 */
+	private function get_available_plugin_integrations() {
+		$plugins = array();
+		
+		// Check for popular plugins
+		$plugin_checks = array(
+			'yoast_seo' => array(
+				'files' => array('wordpress-seo/wp-seo.php', 'wordpress-seo-premium/wp-seo-premium.php'),
+				'class' => 'WPSEO_Options'
+			),
+			'woocommerce' => array(
+				'files' => array('woocommerce/woocommerce.php'),
+				'class' => 'WooCommerce'
+			),
+			'contact_form_7' => array(
+				'files' => array('contact-form-7/wp-contact-form-7.php'),
+				'class' => 'WPCF7'
+			),
+			'elementor' => array(
+				'files' => array('elementor/elementor.php'),
+				'class' => '\Elementor\Plugin'
+			),
+			'wordfence' => array(
+				'files' => array('wordfence/wordfence.php'),
+				'class' => 'wordfence'
+			),
+			'updraftplus' => array(
+				'files' => array('updraftplus/updraftplus.php'),
+				'class' => 'UpdraftPlus'
+			),
+			'wp_rocket' => array(
+				'files' => array('wp-rocket/wp-rocket.php'),
+				'function' => 'rocket_init'
+			),
+			'advanced_custom_fields' => array(
+				'files' => array('advanced-custom-fields/acf.php', 'advanced-custom-fields-pro/acf.php'),
+				'class' => 'ACF'
+			),
+			'all_in_one_seo' => array(
+				'files' => array('all-in-one-seo-pack/all_in_one_seo_pack.php'),
+				'class' => 'All_in_One_SEO_Pack'
+			),
+			'google_analytics_for_wordpress' => array(
+				'files' => array('google-analytics-for-wordpress/googleanalytics.php'),
+				'class' => 'MonsterInsights'
+			),
+			'wpforms_lite' => array(
+				'files' => array('wpforms-lite/wpforms.php'),
+				'class' => 'WPForms'
+			),
+			'wpforms' => array(
+				'files' => array('wpforms/wpforms.php'),
+				'class' => 'WPForms'
+			),
+			'w3_total_cache' => array(
+				'files' => array('w3-total-cache/w3-total-cache.php'),
+				'class' => 'W3_Plugin_TotalCache'
+			)
+		);
+		
+		foreach ($plugin_checks as $plugin_key => $check) {
+			$is_active = false;
+			
+			// Check if plugin files exist and are active
+			foreach ($check['files'] as $file) {
+				if (is_plugin_active($file)) {
+					$is_active = true;
+					break;
+				}
+			}
+			
+			// Additional checks for classes/functions
+			if ($is_active) {
+				if (isset($check['class']) && !class_exists($check['class'])) {
+					$is_active = false;
+				} elseif (isset($check['function']) && !function_exists($check['function'])) {
+					$is_active = false;
+				}
+			}
+			
+			if ($is_active) {
+				$plugins[$plugin_key] = true;
+			}
+		}
+		
+		return $plugins;
 	}
 
 	public function render_command_bar() {
@@ -182,6 +296,27 @@ class Lexia_Command {
 			'permission_callback' => function () {
 				return current_user_can('install_plugins');
 			},
+		));
+
+		// Add endpoint for saving user preferences
+		register_rest_route('lexia-command/v1', '/save-user-preference', array(
+			'methods' => WP_REST_Server::CREATABLE,
+			'callback' => array($this, 'handle_save_user_preference'),
+			'permission_callback' => function () {
+				return is_user_logged_in();
+			},
+			'args' => array(
+				'key' => array(
+					'required' => true,
+					'type' => 'string',
+					'sanitize_callback' => 'sanitize_text_field',
+				),
+				'value' => array(
+					'required' => true,
+					'type' => 'string',
+					'sanitize_callback' => 'sanitize_text_field',
+				),
+			),
 		));
 	}
 
@@ -292,6 +427,147 @@ class Lexia_Command {
 		return new WP_REST_Response(array(
 			'success' => true,
 			'data' => $plugin_statuses,
+		));
+	}
+
+	/**
+	 * Handle saving user preferences
+	 */
+	public function handle_save_user_preference($request) {
+		$key = sanitize_text_field($request->get_param('key'));
+		$value = sanitize_text_field($request->get_param('value'));
+		
+		// Validate allowed preference keys
+		$allowed_keys = array('darkMode', 'theme', 'highContrast', 'reducedMotion', 'largerFontSize');
+		if (!in_array($key, $allowed_keys)) {
+			return new WP_REST_Response(array(
+				'success' => false,
+				'message' => 'Invalid preference key',
+			), 400);
+		}
+		
+		$user_id = get_current_user_id();
+		if (!$user_id) {
+			return new WP_REST_Response(array(
+				'success' => false,
+				'message' => 'User not logged in',
+			), 401);
+		}
+		
+		// Save the preference using WordPress user meta
+		$meta_key = 'lexia_command_' . $key;
+		$result = update_user_meta($user_id, $meta_key, $value);
+		
+		// update_user_meta returns false if the value is the same as existing value
+		// So we need to check if the value was actually saved
+		$saved_value = get_user_meta($user_id, $meta_key, true);
+		
+		if ($saved_value === $value) {
+			return new WP_REST_Response(array(
+				'success' => true,
+				'message' => 'Preference saved successfully',
+			));
+		} else {
+			return new WP_REST_Response(array(
+				'success' => false,
+				'message' => 'Failed to save preference',
+				'debug' => array(
+					'key' => $key,
+					'value' => $value,
+					'meta_key' => $meta_key,
+					'saved_value' => $saved_value,
+					'update_result' => $result
+				)
+			), 500);
+		}
+	}
+
+	/**
+	 * AJAX handler for toggling maintenance mode
+	 */
+	public function handle_toggle_maintenance() {
+		// Verify nonce
+		if (!wp_verify_nonce($_POST['_ajax_nonce'], 'wp_rest')) {
+			wp_die('Security check failed');
+		}
+
+		// Check permissions
+		if (!current_user_can('manage_options')) {
+			wp_die('Insufficient permissions');
+		}
+
+		// Simple maintenance mode toggle using a WordPress option
+		$is_maintenance = get_option('lexia_maintenance_mode', false);
+		$new_status = !$is_maintenance;
+		
+		update_option('lexia_maintenance_mode', $new_status);
+		
+		wp_send_json(array(
+			'success' => true,
+			'maintenance_mode' => $new_status,
+			'message' => $new_status ? 
+				__('Maintenance mode enabled', 'lexia-command') : 
+				__('Maintenance mode disabled', 'lexia-command')
+		));
+	}
+
+	/**
+	 * AJAX handler for clearing cache
+	 */
+	public function handle_clear_cache() {
+		// Verify nonce
+		if (!wp_verify_nonce($_POST['_ajax_nonce'], 'wp_rest')) {
+			wp_die('Security check failed');
+		}
+
+		// Check permissions
+		if (!current_user_can('manage_options')) {
+			wp_die('Insufficient permissions');
+		}
+
+		$cleared = array();
+		$errors = array();
+
+		// Clear WordPress object cache
+		if (function_exists('wp_cache_flush')) {
+			wp_cache_flush();
+			$cleared[] = 'Object Cache';
+		}
+
+		// Clear transients
+		global $wpdb;
+		$wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_%'");
+		$wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_site_transient_%'");
+		$cleared[] = 'Transients';
+
+		// WP Rocket
+		if (function_exists('rocket_clean_domain')) {
+			rocket_clean_domain();
+			$cleared[] = 'WP Rocket';
+		}
+
+		// W3 Total Cache
+		if (function_exists('w3tc_pgcache_flush')) {
+			w3tc_pgcache_flush();
+			w3tc_minify_flush();
+			w3tc_objectcache_flush();
+			$cleared[] = 'W3 Total Cache';
+		}
+
+		// WP Super Cache
+		if (function_exists('wp_cache_clear_cache')) {
+			wp_cache_clear_cache();
+			$cleared[] = 'WP Super Cache';
+		}
+
+		wp_send_json(array(
+			'success' => true,
+			'cleared' => $cleared,
+			'errors' => $errors,
+			'message' => sprintf(
+				__('Cleared: %s', 'lexia-command'), 
+				implode(', ', $cleared)
+			)
 		));
 	}
 }
