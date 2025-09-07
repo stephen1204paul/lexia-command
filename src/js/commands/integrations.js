@@ -345,6 +345,128 @@ export const pluginIntegrations = [
         action: () => {
             window.location.href = window.lexiaCommandData.adminUrl + 'admin.php?page=wpforms-entries';
         }
+    },
+
+    // Fluent Forms
+    {
+        id: 'fluent-forms-dashboard',
+        title: __('Fluent Forms Dashboard', 'lexia-command'),
+        keywords: ['fluent forms', 'forms', 'dashboard', 'builder'],
+        description: __('Manage forms and view overview', 'lexia-command'),
+        category: COMMAND_CATEGORIES.CONTENT,
+        type: COMMAND_TYPES.NAVIGATE,
+        icon: '📝',
+        priority: 8,
+        condition: () => window.lexiaCommandData?.plugins?.fluentform,
+        action: () => {
+            window.location.href = window.lexiaCommandData.adminUrl + 'admin.php?page=fluent_forms';
+        }
+    },
+
+    {
+        id: 'fluent-forms-entries',
+        title: __('Form Entries (Fluent Forms)', 'lexia-command'),
+        keywords: ['fluent forms', 'entries', 'submissions', 'responses'],
+        description: __('View and manage form submissions', 'lexia-command'),
+        category: COMMAND_CATEGORIES.CONTENT,
+        type: COMMAND_TYPES.NAVIGATE,
+        icon: '📊',
+        priority: 8,
+        condition: () => window.lexiaCommandData?.plugins?.fluentform,
+        action: () => {
+            window.location.href = window.lexiaCommandData.adminUrl + 'admin.php?page=fluent_forms_all_entries';
+        }
+    },
+
+    {
+        id: 'fluent-forms-settings',
+        title: __('Fluent Forms Settings', 'lexia-command'),
+        keywords: ['fluent forms', 'settings', 'configuration', 'options'],
+        description: __('Configure Fluent Forms settings', 'lexia-command'),
+        category: COMMAND_CATEGORIES.SETTINGS,
+        type: COMMAND_TYPES.NAVIGATE,
+        icon: '⚙️',
+        priority: 7,
+        condition: () => window.lexiaCommandData?.plugins?.fluentform,
+        action: () => {
+            window.location.href = window.lexiaCommandData.adminUrl + 'admin.php?page=fluent_forms_settings';
+        }
+    },
+
+    {
+        id: 'fluent-forms-reports',
+        title: __('Fluent Forms Reports', 'lexia-command'),
+        keywords: ['fluent forms', 'reports', 'analytics', 'statistics'],
+        description: __('View form submission reports and analytics', 'lexia-command'),
+        category: COMMAND_CATEGORIES.CONTENT,
+        type: COMMAND_TYPES.NAVIGATE,
+        icon: '📈',
+        priority: 7,
+        condition: () => window.lexiaCommandData?.plugins?.fluentform,
+        action: () => {
+            window.location.href = window.lexiaCommandData.adminUrl + 'admin.php?page=fluent_forms_reports';
+        }
+    },
+
+    {
+        id: 'fluent-forms-payments',
+        title: __('Payment Entries (Fluent Forms)', 'lexia-command'),
+        keywords: ['fluent forms', 'payments', 'transactions', 'orders'],
+        description: __('View payment transactions and orders', 'lexia-command'),
+        category: COMMAND_CATEGORIES.CONTENT,
+        type: COMMAND_TYPES.NAVIGATE,
+        icon: '💰',
+        priority: 7,
+        condition: () => window.lexiaCommandData?.plugins?.fluentform,
+        action: () => {
+            window.location.href = window.lexiaCommandData.adminUrl + 'admin.php?page=fluent_forms_payment_entries';
+        }
+    },
+
+    {
+        id: 'fluent-forms-addons',
+        title: __('Fluent Forms Add-ons', 'lexia-command'),
+        keywords: ['fluent forms', 'addons', 'extensions', 'integrations'],
+        description: __('Browse and manage Fluent Forms add-ons', 'lexia-command'),
+        category: COMMAND_CATEGORIES.PLUGINS,
+        type: COMMAND_TYPES.NAVIGATE,
+        icon: '🧩',
+        priority: 6,
+        condition: () => window.lexiaCommandData?.plugins?.fluentform,
+        action: () => {
+            window.location.href = window.lexiaCommandData.adminUrl + 'admin.php?page=fluent_forms_add_ons';
+        }
+    },
+
+    {
+        id: 'fluent-forms-transfer',
+        title: __('Fluent Forms Transfer', 'lexia-command'),
+        keywords: ['fluent forms', 'transfer', 'import', 'export', 'migration'],
+        description: __('Import/export forms and migrate data', 'lexia-command'),
+        category: COMMAND_CATEGORIES.SETTINGS,
+        type: COMMAND_TYPES.NAVIGATE,
+        icon: '🔄',
+        priority: 6,
+        condition: () => window.lexiaCommandData?.plugins?.fluentform,
+        action: () => {
+            window.location.href = window.lexiaCommandData.adminUrl + 'admin.php?page=fluent_forms_transfer';
+        }
+    },
+
+    {
+        id: 'fluent-forms-license',
+        title: __('Activate Fluent Forms License', 'lexia-command'),
+        keywords: ['fluent forms', 'license', 'activate', 'pro', 'key'],
+        description: __('Activate Fluent Forms Pro license key', 'lexia-command'),
+        category: COMMAND_CATEGORIES.SETTINGS,
+        type: COMMAND_TYPES.NAVIGATE,
+        icon: '🔑',
+        priority: 7,
+        condition: () => window.lexiaCommandData?.plugins?.fluentform,
+        action: () => {
+            // Navigate directly to the license section of settings
+            window.location.href = window.lexiaCommandData.adminUrl + 'admin.php?page=fluent_forms_settings#/?sub_route=license';
+        }
     }
 ];
 
@@ -430,6 +552,136 @@ export const quickActionCommands = [
                 }));
             } catch (error) {
                 console.error('Maintenance mode toggle failed:', error);
+            }
+        }
+    },
+
+    // Fluent Forms Quick Actions
+    {
+        id: 'fluent-forms-create-form',
+        title: __('Create New Form (Fluent Forms)', 'lexia-command'),
+        keywords: ['fluent forms', 'create', 'new', 'form', 'builder'],
+        description: __('Create a new form using Fluent Forms', 'lexia-command'),
+        category: COMMAND_CATEGORIES.CONTENT,
+        type: COMMAND_TYPES.CREATE,
+        icon: '📝',
+        priority: 8,
+        condition: () => window.lexiaCommandData?.plugins?.fluentform,
+        action: () => {
+            window.location.href = window.lexiaCommandData.adminUrl + 'admin.php?page=fluent_forms#add=1';
+        }
+    },
+
+    {
+        id: 'fluent-forms-export-entries',
+        title: __('Export Form Entries (Fluent Forms)', 'lexia-command'),
+        keywords: ['fluent forms', 'export', 'entries', 'csv', 'download'],
+        description: __('Export form entries to CSV', 'lexia-command'),
+        category: COMMAND_CATEGORIES.CONTENT,
+        type: COMMAND_TYPES.ACTION,
+        icon: '📤',
+        priority: 6,
+        condition: () => window.lexiaCommandData?.plugins?.fluentform,
+        action: async () => {
+            try {
+                const response = await fetch(window.lexiaCommandData.restUrl + 'lexia-command/v1/fluent-forms/export-entries', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-WP-Nonce': window.lexiaCommandData.nonce
+                    }
+                });
+                
+                const data = await response.json();
+                if (data.success && data.download_url) {
+                    window.open(data.download_url, '_blank');
+                    window.dispatchEvent(new CustomEvent('lexiaCommand:showNotification', {
+                        detail: { message: __('Export started! Check your downloads.', 'lexia-command'), type: 'success' }
+                    }));
+                } else {
+                    window.dispatchEvent(new CustomEvent('lexiaCommand:showNotification', {
+                        detail: { message: __('Failed to export entries', 'lexia-command'), type: 'error' }
+                    }));
+                }
+            } catch (error) {
+                window.dispatchEvent(new CustomEvent('lexiaCommand:showNotification', {
+                    detail: { message: __('Export failed', 'lexia-command'), type: 'error' }
+                }));
+            }
+        }
+    },
+
+    {
+        id: 'fluent-forms-activate-license',
+        title: __('Set Fluent Forms License Key', 'lexia-command'),
+        keywords: ['fluent forms', 'license', 'key', 'activate', 'pro', 'set'],
+        description: __('Enter and activate Fluent Forms Pro license key', 'lexia-command'),
+        category: COMMAND_CATEGORIES.SETTINGS,
+        type: COMMAND_TYPES.ACTION,
+        icon: '🔐',
+        priority: 7,
+        condition: () => window.lexiaCommandData?.plugins?.fluentform,
+        action: async () => {
+            try {
+                // First, check current license status
+                const statusResponse = await fetch(window.lexiaCommandData.restUrl + 'lexia-command/v1/fluent-forms/license-status', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-WP-Nonce': window.lexiaCommandData.nonce
+                    }
+                });
+                
+                const statusData = await statusResponse.json();
+                
+                // Show current status if license exists
+                let promptMessage = __('Enter your Fluent Forms Pro license key:', 'lexia-command');
+                if (statusData.success && statusData.has_license_key) {
+                    promptMessage = __('Current license: ' + statusData.license_key + '\nEnter new license key (or press Cancel to keep current):', 'lexia-command');
+                }
+                
+                const licenseKey = prompt(promptMessage);
+                
+                if (!licenseKey) {
+                    window.dispatchEvent(new CustomEvent('lexiaCommand:showNotification', {
+                        detail: { message: __('License activation cancelled', 'lexia-command'), type: 'info' }
+                    }));
+                    return;
+                }
+
+                // Activate the new license key
+                const response = await fetch(window.lexiaCommandData.restUrl + 'lexia-command/v1/fluent-forms/activate-license', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-WP-Nonce': window.lexiaCommandData.nonce
+                    },
+                    body: JSON.stringify({
+                        license_key: licenseKey.trim()
+                    })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    window.dispatchEvent(new CustomEvent('lexiaCommand:showNotification', {
+                        detail: { 
+                            message: data.message || __('License activated successfully!', 'lexia-command'), 
+                            type: 'success' 
+                        }
+                    }));
+                } else {
+                    window.dispatchEvent(new CustomEvent('lexiaCommand:showNotification', {
+                        detail: { 
+                            message: data.message || __('Failed to activate license', 'lexia-command'), 
+                            type: 'error' 
+                        }
+                    }));
+                }
+            } catch (error) {
+                console.error('License activation error:', error);
+                window.dispatchEvent(new CustomEvent('lexiaCommand:showNotification', {
+                    detail: { message: __('License activation failed', 'lexia-command'), type: 'error' }
+                }));
             }
         }
     }

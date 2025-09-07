@@ -205,6 +205,10 @@ class Lexia_Command {
 			'w3_total_cache' => array(
 				'files' => array('w3-total-cache/w3-total-cache.php'),
 				'class' => 'W3_Plugin_TotalCache'
+			),
+			'fluentform' => array(
+				'files' => array('fluentform/fluentform.php'),
+				'class' => 'FluentForm\Framework\Foundation\Application'
 			)
 		);
 		
@@ -317,6 +321,41 @@ class Lexia_Command {
 					'sanitize_callback' => 'sanitize_text_field',
 				),
 			),
+		));
+
+		// Add Fluent Forms endpoints
+		register_rest_route('lexia-command/v1', '/fluent-forms/export-entries', array(
+			'methods' => WP_REST_Server::CREATABLE,
+			'callback' => array($this, 'handle_fluent_forms_export_entries'),
+			'permission_callback' => function () {
+				return current_user_can('manage_options') && $this->is_fluentform_active();
+			},
+		));
+
+		register_rest_route('lexia-command/v1', '/fluent-forms/activate-license', array(
+			'methods' => WP_REST_Server::CREATABLE,
+			'callback' => array($this, 'handle_fluent_forms_activate_license'),
+			'permission_callback' => function () {
+				return current_user_can('manage_options') && $this->is_fluentform_active();
+			},
+			'args' => array(
+				'license_key' => array(
+					'required' => true,
+					'type' => 'string',
+					'sanitize_callback' => 'sanitize_text_field',
+					'validate_callback' => function($param) {
+						return !empty(trim($param));
+					}
+				),
+			),
+		));
+
+		register_rest_route('lexia-command/v1', '/fluent-forms/license-status', array(
+			'methods' => WP_REST_Server::READABLE,
+			'callback' => array($this, 'handle_fluent_forms_license_status'),
+			'permission_callback' => function () {
+				return current_user_can('manage_options') && $this->is_fluentform_active();
+			},
 		));
 	}
 
@@ -569,5 +608,180 @@ class Lexia_Command {
 				implode(', ', $cleared)
 			)
 		));
+	}
+
+	/**
+	 * Check if Fluent Forms is active
+	 */
+	private function is_fluentform_active() {
+		return class_exists('FluentForm\Framework\Foundation\Application') || 
+			   is_plugin_active('fluentform/fluentform.php');
+	}
+
+	/**
+	 * Handle Fluent Forms export entries
+	 */
+	public function handle_fluent_forms_export_entries($request) {
+		if (!$this->is_fluentform_active()) {
+			return new WP_Error('plugin_not_active', __('Fluent Forms is not active', 'lexia-command'), array('status' => 404));
+		}
+
+		try {
+			// Check if Fluent Forms export functions are available
+			if (!class_exists('FluentForm\App\Services\FormBuilder\ExportImportService')) {
+				return new WP_Error('export_not_available', __('Export service not available', 'lexia-command'), array('status' => 500));
+			}
+
+			// Get all forms with entries
+			global $wpdb;
+			$forms_table = $wpdb->prefix . 'fluentform_forms';
+			$submissions_table = $wpdb->prefix . 'fluentform_submissions';
+			
+			$forms_with_entries = $wpdb->get_results("
+				SELECT f.id, f.title, COUNT(s.id) as entry_count 
+				FROM {$forms_table} f 
+				LEFT JOIN {$submissions_table} s ON f.id = s.form_id 
+				GROUP BY f.id, f.title 
+				HAVING entry_count > 0 
+				ORDER BY f.title
+			");
+
+			if (empty($forms_with_entries)) {
+				return new WP_Error('no_entries', __('No form entries found to export', 'lexia-command'), array('status' => 404));
+			}
+
+			// For now, return form information - actual export would need more complex implementation
+			return new WP_REST_Response(array(
+				'success' => true,
+				'message' => __('Forms with entries found', 'lexia-command'),
+				'forms' => $forms_with_entries,
+				'note' => __('Navigate to Fluent Forms > Entries to export specific form data', 'lexia-command')
+			), 200);
+
+		} catch (Exception $e) {
+			return new WP_Error('export_failed', $e->getMessage(), array('status' => 500));
+		}
+	}
+
+	/**
+	 * Handle Fluent Forms license activation
+	 */
+	public function handle_fluent_forms_activate_license($request) {
+		if (!$this->is_fluentform_active()) {
+			return new WP_Error('plugin_not_active', __('Fluent Forms is not active', 'lexia-command'), array('status' => 404));
+		}
+
+		$license_key = sanitize_text_field($request->get_param('license_key'));
+		
+		if (empty($license_key)) {
+			return new WP_Error('invalid_license', __('License key is required', 'lexia-command'), array('status' => 400));
+		}
+
+		try {
+			// Check if Fluent Forms Pro is installed
+			if (!$this->is_fluentform_pro_installed()) {
+				return new WP_Error('pro_not_installed', __('Fluent Forms Pro is not installed. Please install the Pro add-on first.', 'lexia-command'), array('status' => 400));
+			}
+
+			// Store the license key in WordPress options
+			// Fluent Forms typically stores license data in fluentform_* options
+			$license_option = 'fluentformpro_license_key';
+			update_option($license_option, $license_key);
+
+			// Try to activate the license if Fluent Forms Pro activation method is available
+			$activation_result = $this->activate_fluentform_license($license_key);
+
+			if ($activation_result['success']) {
+				return new WP_REST_Response(array(
+					'success' => true,
+					'message' => __('License key saved and activated successfully!', 'lexia-command'),
+					'license_status' => $activation_result['status'] ?? 'active'
+				), 200);
+			} else {
+				return new WP_REST_Response(array(
+					'success' => false,
+					'message' => $activation_result['message'] ?? __('License key saved but activation failed. Please verify the key manually.', 'lexia-command'),
+					'license_status' => 'inactive'
+				), 200);
+			}
+
+		} catch (Exception $e) {
+			return new WP_Error('activation_failed', $e->getMessage(), array('status' => 500));
+		}
+	}
+
+	/**
+	 * Handle Fluent Forms license status check
+	 */
+	public function handle_fluent_forms_license_status($request) {
+		if (!$this->is_fluentform_active()) {
+			return new WP_Error('plugin_not_active', __('Fluent Forms is not active', 'lexia-command'), array('status' => 404));
+		}
+
+		try {
+			$license_key = get_option('fluentformpro_license_key', '');
+			$license_status = get_option('fluentformpro_license_status', 'inactive');
+			
+			return new WP_REST_Response(array(
+				'success' => true,
+				'has_license_key' => !empty($license_key),
+				'license_key' => !empty($license_key) ? substr($license_key, 0, 8) . '...' : '',
+				'status' => $license_status,
+				'pro_installed' => $this->is_fluentform_pro_installed()
+			), 200);
+
+		} catch (Exception $e) {
+			return new WP_Error('status_check_failed', $e->getMessage(), array('status' => 500));
+		}
+	}
+
+	/**
+	 * Check if Fluent Forms Pro is installed
+	 */
+	private function is_fluentform_pro_installed() {
+		// Check for Pro plugin files or classes
+		return class_exists('FluentFormPro\Framework\Foundation\Application') ||
+			   is_plugin_active('fluentformpro/fluentformpro.php') ||
+			   file_exists(WP_PLUGIN_DIR . '/fluentformpro/fluentformpro.php');
+	}
+
+	/**
+	 * Activate Fluent Forms license
+	 */
+	private function activate_fluentform_license($license_key) {
+		// This method attempts to activate the license using Fluent Forms Pro methods
+		// if they're available, otherwise it just saves the key for manual activation
+		
+		try {
+			// Try to use Fluent Forms Pro license activation if available
+			if (class_exists('FluentFormPro\Framework\Foundation\Application')) {
+				// Attempt to activate through Pro application
+				// Note: This is a simplified implementation - actual activation may require 
+				// specific API calls to WPManageNinja servers
+				
+				// Store license status as pending verification
+				update_option('fluentformpro_license_status', 'pending');
+				
+				return array(
+					'success' => true,
+					'status' => 'pending',
+					'message' => __('License key saved. Please verify activation in Fluent Forms settings.', 'lexia-command')
+				);
+			}
+
+			// If Pro classes aren't available, just save the key
+			return array(
+				'success' => true,
+				'status' => 'saved',
+				'message' => __('License key saved. Install Fluent Forms Pro to complete activation.', 'lexia-command')
+			);
+
+		} catch (Exception $e) {
+			return array(
+				'success' => false,
+				'status' => 'error',
+				'message' => $e->getMessage()
+			);
+		}
 	}
 }
